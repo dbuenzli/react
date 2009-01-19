@@ -1,0 +1,106 @@
+#!/bin/sh
+set -e
+
+# Project info
+PROJECTNAME="react"
+VERSION="0.9.0"
+COPYRIGHTYEAR="2009"
+SHORTDESCRIPTION="Applicative events and signals for OCaml"
+EMAIL="daniel.buenzl i\\\@erratique.ch"
+
+INSTALLDIR=${INSTALLDIR:="`ocamlc -where`/$PROJECTNAME"}
+DOCDIR=${DOCDIR:="doc"}
+F=${F:="_build/src/$PROJECTNAME"}
+
+# Caml tools
+OCAMLDOC=${OCAMLDOC:="ocamldoc"}
+OCAMLBUILD=${OCAMLBUILD:="ocamlbuild"}
+BUILDFLAGS=${BUILDFLAGS:="-classic-display"}
+
+# Misc tools
+CP=${CP:="cp"}
+RM=${RM:="rm"}
+MKDIR=${MKDIR:="mkdir"}
+
+ocb () { $OCAMLBUILD $BUILDFLAGS $* ; }
+
+action () 
+{
+  case $1 in
+    module-byte) 
+      ocb $PROJECTNAME.cmo ;;
+    module-native) 
+      ocb $PROJECTNAME.cmx ;;
+    module-plugin)
+      ocb $PROJECTNAME.cmxs ;;
+    module)
+      action module-native
+      action module-byte ;;
+    doc)
+      ocb $PROJECTNAME.cmi
+      $OCAMLDOC -html -I src -colorize-code -d $DOCDIR src/$PROJECTNAME.mli ;;
+    install-byte)
+      action module-byte
+      $MKDIR -p $INSTALLDIR
+      $CP $F.ml $F.mli $F.cmi $F.cmo src/META $INSTALLDIR ;;
+    install)
+      action install-byte
+      action module-native
+      $CP $F.cmx $F.o $INSTALLDIR ;;
+    install-plugin)
+      action install
+      action module-plugin
+      $CP $F.cmxs $INSTALLDIR ;;
+    distrib) distrib ;;
+    clean) 
+      ocb -clean ;;
+    clean-all) 
+      action clean
+      rm -f $DOCDIR/*.html ;;
+    *) 
+      ocb $1;;
+  esac;
+} 
+
+distrib ()
+{
+  CD=${CD:="cd"}
+  FIND=${FIND:="find"}
+  GREP=${GREP:="grep"}
+  TAR=${TAR:="tar"}
+
+  DIRNAME=$PROJECTNAME-$VERSION
+  ROOTDIR=/tmp/$DIRNAME
+  $RM -rf $ROOTDIR
+  $MKDIR -p $ROOTDIR
+  $CP -r . $ROOTDIR
+  $CD $ROOTDIR
+  action clean-all
+
+  $RM -rf _darcs
+  $FIND $ROOTDIR \
+    \( -name "*~" -o -name ".DS_Store" -o -name ".gdb_history" \) \
+    -exec $RM {} ';'
+  for file in `$FIND $ROOTDIR -type f -print`; do
+    sed -i "" "s/%%VERSION%%/$VERSION/; \
+               s/%%COPYRIGHTYEAR%%/$COPYRIGHTYEAR/; \
+               s/%%SHORTDESCRIPTION%%/$SHORTDESCRIPTION/; \
+               s/%%PROJECTNAME%%/$PROJECTNAME/; \
+               s/%%EMAIL%%/$EMAIL/;" \
+	$file
+  done
+
+  action module
+  action test.native
+  ./test.native
+  action doc
+  action clean
+
+  $CD ..
+  $TAR -cvjf $DIRNAME.tbz $DIRNAME
+  $RM -r $DIRNAME
+}
+
+if [ $# -eq 0 ]; then action module ; else
+  while [ $# -gt 0 ]; do action $1; shift ; done
+fi
