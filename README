@@ -41,8 +41,12 @@ with :
 
   > ./build test.native
   > ./build clock.native
+  > ./build breakout.native
 
 test.native tests the combinators, nothing should fail.
 
 clock.native is a command line program using ANSI escape sequences and
 the Unix module to print the current local time.
+
+breakout.native is a command line program using ANSI escape sequences
+and the Unix module to implement a simple breakout game.
