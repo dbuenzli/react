@@ -97,7 +97,7 @@ end = struct
   let flush () = pr "%!"
   let reset () = clear (); pr "\x1Bc"; flush ()
   let init () = 
-    pr "\x1B[H\x1B[30,47m\x1B[7l"; clear (); flush ();
+    pr "\x1B[H\x1B[30;47m\x1B[7l"; clear (); flush ();
     at_exit (reset)
 
   let text ?(center = true) ?(color = 7) pos str =
@@ -110,7 +110,7 @@ end = struct
     let (w, h) = V2.to_ints (Rect.size r) in
     pr "\x1B7\x1B[%dm" color;
     for y' = y to y + h - 1 do
-      pr "\x1B\x1B[%d;%df" y' x; for i = 1 to w do pr " " done
+      pr "\x1B[%d;%df" y' x; for i = 1 to w do pr " " done
     done;
     pr "\x1B8"
 
