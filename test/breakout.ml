@@ -123,13 +123,13 @@ module Input : sig                              (* Keyboard and time events. *)
   val key : char event                                    (* keyboard event. *)
   val gather : unit -> unit
 end = struct
-  let reset tattr () = Unix.tcsetattr Unix.stdin Unix.TCSAFLUSH tattr
   let init () =                        (* suppress input echo and buffering. *)
+    let reset tattr () = Unix.tcsetattr Unix.stdin Unix.TCSAFLUSH tattr in
     let attr = Unix.tcgetattr Unix.stdin in
     let attr' = { attr with Unix.c_echo = false; c_icanon = false } in
     let quit _ = exit 0 in
     at_exit (reset attr);
-    Unix.tcsetattr Unix.stdin Unix.TCSAFLUSH attr';
+    Unix.tcsetattr Unix.stdin Unix.TCSANOW attr';
     Sys.set_signal Sys.sigquit (Sys.Signal_handle quit);
     Sys.set_signal Sys.sigint (Sys.Signal_handle quit);
     Sys.set_signal Sys.sigfpe (Sys.Signal_handle quit)
