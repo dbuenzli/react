@@ -1,7 +1,7 @@
 (*----------------------------------------------------------------------------
    Copyright (c) %%COPYRIGHTYEAR%%, Daniel C. Bünzli. All rights reserved.
    Distributed under a BSD license, see license at the end of the file.
-  ----------------------------------------------------------------------------*)
+  ---------------------------------------------------------------------------*)
 
 (* Breakout clone. *)
 
@@ -177,7 +177,7 @@ end = struct
 	if rmin <= cmax then ctime cmax rmin d n else None
       else Some (V2.o, 0.)                         (* initially overlapping. *)
   | d when d > 0. ->
-      if rmin -. d > cmax then None else                    (* moving apart. *) 
+      if rmin -. d > cmax then None else                    (* moving apart. *)
       if rmax -. d <= cmin then 
 	if rmax >= cmin then ctime cmin rmax d (V2.neg n) else None
       else Some (V2.o, 0.)                         (* initially overlapping. *)
@@ -229,9 +229,10 @@ end = struct
       let collide dp ball =
 	let c = match cmin left (Rect.xmin ball) (V2.x dp) V2.ex with
 	| Some _ as c -> c
-	| None -> match cmax right (Rect.xmax ball) (V2.x dp) (V2.neg V2.ex)with
-	  | Some _ as c -> c
-	  | None -> cmin top (Rect.ymin ball) (V2.y dp) V2.ey
+	| None -> 
+	    match cmax right (Rect.xmax ball) (V2.x dp) (V2.neg V2.ex) with
+	    | Some _ as c -> c
+	    | None -> cmin top (Rect.ymin ball) (V2.y dp) V2.ey
 	in
 	match c with 
 	| None -> None 
@@ -294,7 +295,7 @@ end = struct
 	  in
 	  match aux None [] bricks ball dp with
 	  | None, bl -> None, bl
-	  | Some (n, t), bl -> Some (n, V2.sub (Rect.o ball) (V2.smul t dp)), bl
+	  | Some (n, t), bl -> Some (n, V2.sub (Rect.o ball) (V2.smul t dp)),bl
 	in
 	S.sample collide dp (S.Pair.pair ball bricks) 
       in
@@ -408,7 +409,7 @@ end = struct
     let g = Game.create Draw.frame dt moves in
     let outcome = Game.outcome g in 
     let sound = E.map Draw.beep (Game.collisions g) in
-    let output = S.l4 Render.game (Game.ball g) (Game.paddle g) (Game.bricks g) 
+    let output = S.l4 Render.game (Game.ball g) (Game.paddle g) (Game.bricks g)
 	(Game.brick_count g)
     in
     let stop () = E.stop sound; S.stop output in
@@ -477,4 +478,4 @@ let ui = main ()                               (* keep a ref. to avoid g.c. *)
   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  ----------------------------------------------------------------------------*)
+  ---------------------------------------------------------------------------*)
