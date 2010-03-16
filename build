@@ -68,6 +68,8 @@ distrib ()
   FIND=${FIND:="find"}
   GREP=${GREP:="grep"}
   TAR=${TAR:="tar"}
+  SED=${SED:="sed"}
+  MV=${MV:="mv"}
 
   DIRNAME=$PROJECTNAME-$VERSION
   ROOTDIR=/tmp/$DIRNAME
@@ -82,12 +84,13 @@ distrib ()
     \( -name "*~" -o -name ".DS_Store" -o -name ".gdb_history" \) \
     -exec $RM {} ';'
   for file in `$FIND $ROOTDIR -type f -print`; do
-    sed -i "" "s/%%VERSION%%/$VERSION/; \
+    $SED      "s/%%VERSION%%/$VERSION/; \
                s/%%COPYRIGHTYEAR%%/$COPYRIGHTYEAR/; \
                s/%%SHORTDESCRIPTION%%/$SHORTDESCRIPTION/; \
                s/%%PROJECTNAME%%/$PROJECTNAME/; \
                s/%%EMAIL%%/$EMAIL/;" \
-	$file
+	$file > $file.tmp
+    $MV -f $file.tmp $file
   done
 
   action module
