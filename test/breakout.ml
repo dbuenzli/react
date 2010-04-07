@@ -93,28 +93,27 @@ module Draw : sig                        (* Draw with ANSI escape sequences. *)
 end = struct                          
   let pr = Printf.printf
   let frame = Rect.create (V2.v 1. 1.) (V2.v 80. 24.)
-  let clear () = pr "\x1B[2J"
+  let clear () = pr "\x1B[47m\x1B[2J"
   let flush () = pr "%!"
   let reset () = clear (); pr "\x1Bc"; flush ()
   let init () = 
-    pr "\x1B[H\x1B[30;47m\x1B[7l"; clear (); flush ();
+    pr "\x1B[H\x1B[7l\x1B[?25l"; clear (); flush ();
     at_exit (reset)
 
-  let text ?(center = true) ?(color = 7) pos str =
+  let text ?(center = true) ?(color = 30) pos str =
     let x, y = V2.to_ints pos in
     let x = if center then x - (String.length str) / 2 else x in
-    pr ("\x1B7\x1B[%d;%df\x1B[%dm%s\x1B8") y x color str
+    pr ("\x1B[%d;%df\x1B[47;%dm%s") y x color str
       
-  let rect ?(color = 7) r =
+  let rect ?(color = 40) r =
     let (x, y) = V2.to_ints (Rect.o r) in
     let (w, h) = V2.to_ints (Rect.size r) in
-    pr "\x1B7\x1B[%dm" color;
+    pr "\x1B[%dm" color;
     for y' = y to y + h - 1 do
       pr "\x1B[%d;%df" y' x; for i = 1 to w do pr " " done
-    done;
-    pr "\x1B8"
+    done
 
-  let beep () = pr "\x1B7\x07\x1B8%!"
+  let beep () = pr "\x07%!"
 end
 
 module Input : sig                              (* Keyboard and time events. *)
