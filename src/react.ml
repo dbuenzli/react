@@ -614,7 +614,7 @@ module E = struct
   let select el =
     let emuts, r = find_muts_and_next_rank el in
     let m' = emut r in
-    let rec p () = List.map (fun m -> m.enode) emuts
+    let rec p () = List.rev_map (fun m -> m.enode) emuts
     and u c = try eupdate (eval (List.find occurs emuts)) m' c with
     | Not_found -> assert false 
     in
@@ -629,7 +629,7 @@ module E = struct
     in
     let emuts, r = find_muts_and_next_rank el in 
     let m' = emut r in
-    let rec p () = List.map (fun m -> m.enode) emuts 
+    let rec p () = List.rev_map (fun m -> m.enode) emuts 
     and u c = eupdate (fold f a emuts) m' c in
     List.iter (fun m -> add_dep m m'.enode) emuts;
     event m' p u
