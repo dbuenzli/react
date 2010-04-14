@@ -783,12 +783,19 @@ let fl' x y = S.l2 f x y                            (* efficient *)
     be opened in specific scopes. For example if you are dealing with
     float signals you can open {!S.Float}.  
 {[open React 
-open React.S.Float (* float signals *)
+open React.S.Float 
 
-let f t = sqrt t *. sin t
+let f t = sqrt t *. sin t (* f is defined on float signals *)
 ...
 open Pervasives (* back to pervasives floats *)
 ]}
+   If you are using OCaml 3.12 or later you can also use the [let open]
+   construct 
+{[let open React.S.Float in 
+let f t = sqrt t *. sin t in (* f is defined on float signals *)
+...
+]}
+
   {2:recursion Mutual and self reference}
 
   Mutual and self reference among time varying values occurs naturally
