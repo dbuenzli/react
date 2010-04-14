@@ -47,6 +47,13 @@ module E : sig
 
       {b Warning.} [send] must not be executed inside an update cycle. *)
 
+  val retain : 'a event -> (unit -> unit) -> [ `R of (unit -> unit) ]
+  (** [retain e c] keeps a reference to the closure [c] in [e] and
+      returns the previously retained value. [c] will {e never} be
+      invoked.
+
+      {b Raises.} [Invalid_argument] on {!E.never}. *)
+
   val stop : 'a event -> unit
   (** [stop e] stops [e] from occuring. It conceptually becomes
       {!never} and cannot be restarted. Allows to 
@@ -245,6 +252,13 @@ module S : sig
       {b Warning.} If executed in an {{:React.html#update}update
       cycle} may return a non up-to-date value or raise [Failure] if
       the signal is not yet initialized. *)
+
+  val retain : 'a signal -> (unit -> unit) -> [ `R of (unit -> unit) ]
+  (** [retain s c] keeps a reference to the closure [c] in [s] and
+      returns the previously retained value. [c] will {e never} be
+      invoked.
+
+      {b Raises.} [Invalid_argument] on constant signals. *)
 
   (**/**)
   val eq_fun : 'a signal -> ('a -> 'a -> bool) option

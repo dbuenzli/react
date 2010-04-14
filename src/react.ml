@@ -7,6 +7,8 @@
 let err_max_rank = "maximal rank exceeded"
 let err_sig_undef = "signal value undefined yet"
 let err_fix = "trying to fix a delayed value"
+let err_retain_never = "E.never cannot retain a closure"
+let err_retain_cst_sig = "constant signals cannot retain a closure"
 
 module Wa = struct                  
   type 'a t = { mutable arr : 'a Weak.t; mutable len : int }
@@ -71,6 +73,7 @@ end
 type node = 
     { mutable rank : int;        (* its rank (height) in the dataflow graph. *)
       mutable stamp : cycle;        (* last cycle in which it was scheduled. *)
+      mutable retain : unit -> unit; (* retained by the node, NEVER invoked. *)
       mutable producers : unit -> node list;   (* nodes on which it depends. *) 
       mutable update : cycle -> unit;                     (* update closure. *)
       deps : node Wa.t }              (* weak references to dependent nodes. *)
@@ -293,8 +296,8 @@ module Node = struct
   let nop _ = ()
   let no_producers () = []
   let create r = 
-    { rank = r; stamp = Cycle.nil; update = nop; producers = no_producers;
-      deps = Wa.create 0 }
+    { rank = r; stamp = Cycle.nil; update = nop; retain = nop;
+      producers = no_producers; deps = Wa.create 0 }
 
   let bind n p u = n.producers <- p; n.update <- u
   let stop n = n.producers <- no_producers; n.update <- nop; Wa.clear n.deps
@@ -385,6 +388,10 @@ module E = struct
     let m = emut Node.min_rank in
     Emut m, send m
       
+  let retain e c = match e with 
+  | Never -> invalid_arg err_retain_never 
+  | Emut m -> let c' = m.enode.retain in (m.enode.retain <- c); (`R c')
+
   let stop = function Never -> () | Emut m -> Node.stop m.enode
   let equal e e' = match e, e' with
   | Never, Never -> true
@@ -706,12 +713,17 @@ module S = struct
 
   (* Basics *)
 
-  let eq_fun = function Const _ -> None | Smut m -> Some m.eq
   let const v = Const v
   let create ?(eq = ( = )) v = 
     let m = smut Node.min_rank eq in
     m.sv <- Some v;
     Smut m, set m
+
+  let retain s c = match s with 
+  | Const _ -> invalid_arg err_retain_cst_sig
+  | Smut m -> let c' = m.snode.retain in m.snode.retain <- c; (`R c')
+
+  let eq_fun = function Const _ -> None | Smut m -> Some m.eq
 
   let value = function 
     | Const v | Smut { sv = Some v }  -> v
