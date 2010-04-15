@@ -3,8 +3,8 @@ set -e
 
 # Project info
 PROJECTNAME="react"
-VERSION="0.9.0"
-COPYRIGHTYEAR="2009"
+VERSION="0.9.1"
+COPYRIGHTYEAR="2009-2010"
 SHORTDESCRIPTION="Applicative events and signals for OCaml"
 EMAIL="daniel.buenzl i\\\@erratique.ch"
 
@@ -79,6 +79,7 @@ distrib ()
   $CD $ROOTDIR
   action clean-all
 
+  $RM -f TODO
   $RM -rf _darcs
   $FIND $ROOTDIR \
     \( -name "*~" -o -name ".DS_Store" -o -name ".gdb_history" \) \

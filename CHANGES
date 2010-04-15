@@ -1,3 +1,10 @@
+# Version 0.9.1, 2010-04-15, Paris
+
+- Added E.retain and S.retain.
+- A few List.map where replaced by List.rev_map. 
+- Fixes to breakout.ml to make it work on vte based terminals.
+
+
 # Version 0.9.0, 2009-01-19, Lausanne
 
 First release.
