@@ -933,9 +933,36 @@ let test_signals () =
   test_lifters ();
   ()
 
+(* bug fixes *)
+
+let test_jake_heap_bug () =
+  Gc.full_major ();
+  let id x = x in
+  let a, set_a = S.create 0 in  (* rank 0 *)
+  let _ = S.map (fun x -> if x = 2 then Gc.full_major ()) a in
+  let _ = 
+    let a1 = S.map id a in 
+    (S.l2 (fun x y -> (x + y)) a1 a), (* rank 2 *)
+    (S.l2 (fun x y -> (x + y)) a1 a), (* rank 2 *)
+    (S.l2 (fun x y -> (x + y)) a1 a)  (* rank 2 *)
+  in
+  let _ = 
+    (S.l2 (fun x y -> (x + y)) a a), (* rank 1 *)
+    (S.l2 (fun x y -> (x + y)) a a) (* rank 1 *)
+  in
+  let d = S.map id (S.map id (S.map (fun x -> x + 1) a)) in (* rank 3 *) 
+  let h = S.l2 (fun x y -> x + y) a d in (* rank 4 *)
+  let a_h = vals h [ 1; 5 ] in 
+  set_a 2;
+  empty a_h
+
+
+let test_misc () = test_jake_heap_bug ()
+  
 let main () = 
   test_events ();
   test_signals ();
+  test_misc ();
   print_endline "All tests succeeded."
 
 let () = main ()
