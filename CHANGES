@@ -1,3 +1,9 @@
+# Version 0.9.2, 2010-04-25, Lausanne
+
+- Fix a bug in weak heap implementation (thanks to Jake Donham for reporting
+  and a discussion about the fix).
+
+
 # Version 0.9.1, 2010-04-15, Paris
 
 - Added E.retain and S.retain.
