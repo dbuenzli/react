@@ -126,7 +126,19 @@ and heap = node Wa.t
 (* The type for heaps. 
 
    Weak min-heaps of nodes sorted according to their rank. Classic
-   imperative implementation. *)
+   imperative implementation with a twist to accomodate the fact
+   that nodes may disappear. 
+
+   The heap property we maintain is that for any node its descendents
+   (vs. children) are either of no smaller rank or they are None. None
+   nodes need to be treated specially in percolate up and down. The
+   reason is that it blocks information about the rank of their
+   descendents.  In percolate down the solution is to systematically
+   swap with None children.  So do we in percolate up, however, in
+   that case we may violate the property if we swap with a None node
+   and stop right after (either because we got the root or we found a
+   parent of smaller rank), the property can however be reestablished
+   by percolating down from that point. *)
 
 type 'a emut = 
     { ev : 'a option ref;     (* during cycles, holds a potential occurence. *)
@@ -206,20 +218,15 @@ type 'a signal = Const of 'a | Smut of 'a smut
      m's up to date values whenever n will initialize and the rank of
      n ensures this. *)
 
-module H = struct                                                  (* Heaps. *)
+module H = struct                                                  
   let size = Wa.length
   let els h = Wa.fold (fun acc e -> e :: acc) [] h  (*  no particular order. *)
-  let compare h i i' = match Wa.get h i, Wa.get h i' with
+  let compare_down h i i' = match Wa.get h i, Wa.get h i' with
   | Some n, Some n' -> compare n.rank n'.rank
-  | Some _, None -> -1                     (* None is greater than anything. *)
-  | None, Some _ -> 1                      (* None is greater than anything. *)
+  | Some _, None -> 1                      (* None is smaller than anything. *)
+  | None, Some _ -> -1                     (* None is smaller than anything. *)
   | None, None -> 0
-	  	
-  let rec up h i =
-    if i = 0 then () else
-    let p = (i - 1) / 2 in                                  (* parent index. *)
-    if compare h i p < 0 then (Wa.swap h i p; up h p)
-	  
+	  		  
   let rec down h i =
     let last = size h - 1 in
     let start = 2 * i in
@@ -227,9 +234,23 @@ module H = struct                                                  (* Heaps. *)
     let r = start + 2 in                               (* right child index. *)
     if l > last then () (* no child, stop *) else
     let child =                                  (* index of smallest child. *)
-      if r > last then l else (if compare h l r < 0 then l else r)
+      if r > last then l else (if compare_down h l r < 0 then l else r)
     in
-    if compare h i child > 0 then (Wa.swap h i child; down h child)
+    if compare_down h i child > 0 then (Wa.swap h i child; down h child)
+
+  let up h i =
+    let rec aux h i last_none =
+      if i = 0 then (if last_none then down h 0) else
+      let p = (i - 1) / 2 in                                (* parent index. *)
+      match Wa.get h i, Wa.get h p with
+      | Some n, Some n' -> 
+	  if compare n.rank n'.rank < 0 then (Wa.swap h i p; aux h p false) else
+	  (if last_none then down h i)
+      | Some _, None -> 
+	  Wa.swap h i p; aux h p true
+      | None, _ -> () 
+    in
+    aux h i false
 	
   let rebuild h = for i = (size h - 2) / 2 downto 0 do down h i done
   let add h n = Wa.add h n; up h (size h - 1)
