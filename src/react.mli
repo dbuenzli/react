@@ -13,14 +13,12 @@
     choose the concrete timeline.
 
     Consult the {{:#sem}semantics}, the {{:#basics}basics} and
-    {{:#ex}examples}.  
+    {{:#ex}examples}. Open the module to use it, this defines only two
+    types and modules in your scope.
 
-    Open the module to use it. This defines only two types and two modules
-    in your scope. 
-
-    {e Version %%VERSION%% - %%EMAIL%% }
+    {e Version %%VERSION%% - %%EMAIL%% } *)
     
-    {1:top  } *)
+(**    {1 Interface} *)
 
 type 'a event
 (** The type for events of type ['a]. *)
