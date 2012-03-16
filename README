@@ -26,7 +26,7 @@ If you don't, `%%NAME%%.mli` and `%%NAME%%.ml` contain everything, the
 code, the documentation and the license. Install the dependencies and
 use the sources the way you want. For example if you use `ocamlbuild`
 you can issue the following commands from the root directory of your
-project:
+project :
 
     ln -s /path/to/%%NAME%%-%%VERSION%%/src %%NAME%%
     echo "<%%NAME%%> : include" >> _tags
@@ -44,13 +44,13 @@ Sample programs
 ---------------
 
 Sample programs are located in the `test` directory of the
-distribution. They can be build with 
+distribution. They can be built with : 
 
     ocamlbuild test/tests.otarget
 
-The resulting binaries are in `_build/test`:
+The resulting binaries are in `_build/test` :
 
-- test.native tests the combinators, nothing should fail.
+- test.native tests the library, nothing should fail.
 - clock.native is a command line program using ANSI escape sequences 
   and the Unix module to print the current local time. 
 - breakout.native is a command line program using ANSI escape sequences
