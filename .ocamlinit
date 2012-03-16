@@ -1,4 +1,2 @@
-#directory "_build/src";;
-#load "react.cmo";;
-
-open React;;
+#directory "_build/src"
+#load "react.cmo"
