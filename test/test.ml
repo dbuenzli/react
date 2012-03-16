@@ -1,7 +1,7 @@
-(*----------------------------------------------------------------------------
-   Copyright (c) %%COPYRIGHTYEAR%%, Daniel C. Bünzli. All rights reserved.
-   Distributed under a BSD license, see license at the end of the file.
-  ----------------------------------------------------------------------------*)
+(*---------------------------------------------------------------------------
+   Copyright %%COPYRIGHT%%. All rights reserved.
+   Distributed under a BSD3 license, see license at the end of the file.
+  ---------------------------------------------------------------------------*)
 
 (* Tests for react's combinators.
    Compile with -g to get a precise backtrace to the error. 
@@ -968,7 +968,7 @@ let main () =
 let () = main ()
 
 (*----------------------------------------------------------------------------
-  Copyright (c) %%COPYRIGHTYEAR%%, Daniel C. Bünzli
+  Copyright %%COPYRIGHT%%
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -983,7 +983,7 @@ let () = main ()
      documentation and/or other materials provided with the
      distribution.
 
-  3. Neither the name of the Daniel C. Bünzli nor the names of
+  3. Neither the name of Daniel C. Bünzli nor the names of
      contributors may be used to endorse or promote products derived
      from this software without specific prior written permission.
 
@@ -998,7 +998,7 @@ let () = main ()
   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  ----------------------------------------------------------------------------*)
+  ---------------------------------------------------------------------------*)
 
 
 

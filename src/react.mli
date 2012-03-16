@@ -1,13 +1,13 @@
-(*----------------------------------------------------------------------------
-   Copyright (c) %%COPYRIGHTYEAR%%, Daniel C. Bünzli. All rights reserved.
-   Distributed under a BSD license, see license at the end of the file.
-   React version %%VERSION%%
-  ----------------------------------------------------------------------------*)
+(*---------------------------------------------------------------------------
+   Copyright %%COPYRIGHT%%. All rights reserved.
+   Distributed under a BSD3 license, see license at the end of the file.
+   %%NAME%% release %%VERSION%%
+  ---------------------------------------------------------------------------*)
 
-(** Applicative events and signals.
+(** Declarative events and signals.
 
     React is a module for functional reactive programming (frp).  It
-    provides support to program with time varying values : applicative
+    provides support to program with time varying values : declarative
     {{:React.E.html}events} and {{:React.S.html}signals}. React
     doesn't define any primitive event or signal, this lets the client
     choose the concrete timeline.
@@ -16,7 +16,7 @@
     {{:#ex}examples}. Open the module to use it, this defines only two
     types and modules in your scope.
 
-    {e Version %%VERSION%% - %%EMAIL%% } *)
+    {e Release %%VERSION%% - %%AUTHORS%% } *)
     
 (**    {1 Interface} *)
 
@@ -882,8 +882,8 @@ let printer = E.map pr_time seconds
 let () = run ()]}
 *)
 
-(*----------------------------------------------------------------------------
-  Copyright (c) %%COPYRIGHTYEAR%%, Daniel C. Bünzli
+(*---------------------------------------------------------------------------
+  Copyright %%COPYRIGHT%%
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -898,7 +898,7 @@ let () = run ()]}
      documentation and/or other materials provided with the
      distribution.
 
-  3. Neither the name of the Daniel C. Bünzli nor the names of
+  3. Neither the name of Daniel C. Bünzli nor the names of
      contributors may be used to endorse or promote products derived
      from this software without specific prior written permission.
 
@@ -913,4 +913,4 @@ let () = run ()]}
   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  ----------------------------------------------------------------------------*)
+  ---------------------------------------------------------------------------*)

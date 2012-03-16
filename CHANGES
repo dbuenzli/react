@@ -1,16 +1,22 @@
-# Version 0.9.2, 2010-04-25, Lausanne
+v0.9.3 2012-03-15 Lausanne
+--------------------------
+
+- OASIS support.
+
+v0.9.2 2010-04-25 Lausanne
+--------------------------
 
 - Fix a bug in weak heap implementation (thanks to Jake Donham for reporting
   and a discussion about the fix).
 
-
-# Version 0.9.1, 2010-04-15, Paris
+v0.9.1 2010-04-15 Paris
+-----------------------
 
 - Added E.retain and S.retain.
 - A few List.map where replaced by List.rev_map. 
 - Fixes to breakout.ml to make it work on vte based terminals.
 
+v0.9.0 2009-01-19 Lausanne
+--------------------------
 
-# Version 0.9.0, 2009-01-19, Lausanne
-
-First release.
+- First release.

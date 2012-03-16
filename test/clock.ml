@@ -1,4 +1,5 @@
-(* Prints a clock with the current local time in the terminal.  *)
+(* This code is in the public domain. 
+   Prints a clock with the current local time in the terminal.  *)
    
 let pr_time t = 
   let tm = Unix.localtime t in
