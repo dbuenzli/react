@@ -50,8 +50,8 @@ distribution. They can be built with :
 
 The resulting binaries are in `_build/test` :
 
-- test.native tests the library, nothing should fail.
-- clock.native is a command line program using ANSI escape sequences 
+- `test.native` tests the library, nothing should fail.
+- `clock.native` is a command line program using ANSI escape sequences 
   and the Unix module to print the current local time. 
-- breakout.native is a command line program using ANSI escape sequences
+- `breakout.native` is a command line program using ANSI escape sequences
   and the Unix module to implement a simple breakout game.
