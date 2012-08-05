@@ -1,6 +1,6 @@
 OASISFormat: 0.3
 Name: react
-Version: 0.9.3
+Version: 0.9.4
 Synopsis: Declarative events and signals for OCaml
 Authors: Daniel Bünzli <daniel.buenzli at erratique.ch>
 Copyrights: (c) 2009-2012 Daniel C. Bünzli
