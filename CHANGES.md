@@ -1,3 +1,9 @@
+v0.9.5 YYYY-MM-DD Loc
+--------------------------
+
+- OPAM friendly workflow and drop OASIS support.
+
+
 v0.9.4 2012-08-05 Lausanne
 --------------------------
 
