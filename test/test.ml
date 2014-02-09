@@ -1,5 +1,5 @@
 (*---------------------------------------------------------------------------
-   Copyright %%COPYRIGHT%%. All rights reserved.
+   Copyright (c) 2009 Daniel C. Bünzli. All rights reserved.
    Distributed under a BSD3 license, see license at the end of the file.
   ---------------------------------------------------------------------------*)
 
@@ -968,7 +968,7 @@ let main () =
 let () = main ()
 
 (*----------------------------------------------------------------------------
-  Copyright %%COPYRIGHT%%
+  Copyright (c) 2009 Daniel C. Bünzli
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
