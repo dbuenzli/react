@@ -11,6 +11,7 @@ NATIVE=$1
 
 add lib pkg/META		
 add lib src/react.mli	
+add lib src/react.cmti	
 add lib src/react.cmi
 add lib src/react.cmx
 add lib src/react.cma
