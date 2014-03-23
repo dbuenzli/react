@@ -933,6 +933,66 @@ let test_signals () =
   test_lifters ();
   ()
 
+(* Test steps *) 
+
+let test_executed_raise () = 
+  let e, send = E.create () in 
+  let s, set = S.create 4 in
+  let step = Step.create () in 
+  Step.execute step;
+  (try send ~step 3; assert false with Invalid_argument _ -> ());
+  (try set ~step 3; assert false with Invalid_argument _ -> ());
+  (try Step.execute step; assert false with Invalid_argument _ -> ());
+  ()
+
+let test_already_scheduled_raise () = 
+  let e, send = E.create () in 
+  let s, set = S.create 4 in
+  let step = Step.create () in 
+  let step2 = Step.create () in
+  send ~step 3; 
+  (try send ~step 3; assert false with Invalid_argument _ -> ());
+  (try send ~step:step2 4; assert false with Invalid_argument _ -> ());
+  set ~step 5;
+  set ~step 5; (* doesn't raise because sig value is eq. *)
+  (try set ~step 6; assert false with Invalid_argument _ -> ());
+  (try set ~step:step2 7; assert false with Invalid_argument _ -> ());
+  ()
+  
+let test_simulatenous () = 
+  let e1, send1 = E.create () in 
+  let e2, send2 = E.create () in 
+  let s1, set1 = S.create 99 in 
+  let s2, set2 = S.create 98 in 
+  let never = E.dismiss e1 e2 in 
+  let assert_never = occs never [] in
+  let merge = E.merge (fun acc o -> o :: acc) [] [e1; e2] in 
+  let assert_merge = occs merge [[2; 1]] in 
+  let s1_value = S.sample (fun _ sv -> sv) e1 s1 in
+  let assert_s1_value = occs s1_value [ 3 ] in
+  let dismiss = S.dismiss e1 1 s1 in
+  let assert_dismiss = vals dismiss [ 99 ] in
+  let when_ = S.when_ (S.map (( = ) 3) s1) 0 s2 in 
+  let assert_when_ = vals when_ [0; 4] in
+  let step = Step.create () in 
+  send1 ~step 1; 
+  send2 ~step 2; 
+  set1 ~step 3; 
+  set2 ~step 4; 
+  Step.execute step;
+  empty assert_never; 
+  empty assert_merge;
+  empty assert_s1_value;
+  empty assert_dismiss;
+  empty assert_when_;
+  ()
+ 
+let test_steps () =
+  test_executed_raise ();
+  test_already_scheduled_raise ();
+  test_simulatenous ();
+  ()
+  
 (* bug fixes *)
 
 let test_jake_heap_bug () =
@@ -961,6 +1021,7 @@ let test_misc () = test_jake_heap_bug ()
 let main () = 
   test_events ();
   test_signals ();
+  test_steps ();
   test_misc ();
   print_endline "All tests succeeded."
 

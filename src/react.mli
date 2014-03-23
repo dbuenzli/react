@@ -16,7 +16,7 @@
     {{!ex}examples}. Open the module to use it, this defines only two
     types and modules in your scope.
 
-    {e Release %%VERSION%% - %%AUTHORS%% } *)
+    {e Release %%VERSION%% - %%MAINTAINER%% } *)
     
 (**    {1 Interface} *)
 
@@ -25,6 +25,9 @@ type 'a event
 
 type 'a signal
 (** The type for signals of type ['a]. *)
+
+type step 
+(** The type for update steps. *) 
 
 (** Event combinators.  
 
@@ -38,11 +41,18 @@ module E : sig
   val never : 'a event
   (** A never occuring event. For all t, \[[never]\]{_t} [= None]. *)
 
-  val create : unit -> 'a event * ('a -> unit)
-  (** [create ()] is a primitive event [e] and a [send] function. 
-      [send v] generates an occurrence [v] of [e] at the time it is called 
-      and triggers an {{!update}update step}.
-
+  val create : unit -> 'a event * (?step:step -> 'a -> unit)
+  (** [create ()] is a primitive event [e] and a [send] function. The 
+      function [send] is such that:
+      {ul
+      {- [send v] generates an occurrence [v] of [e] at the time it is called 
+         and triggers an {{!steps}update step}.}
+      {- [send ~step v] generates an occurence [v] of [e] on the step [step] 
+         when [step] is {{!Step.execute}executed}.}
+      {- [send ~step v] raises [Invalid_argument] if it was previously 
+         called with a step and this step has not executed yet or if 
+         the given [step] was already executed.}}
+      
       {b Warning.} [send] must not be executed inside an update step. *)
 
   val retain : 'a event -> (unit -> unit) -> [ `R of (unit -> unit) ]
@@ -57,7 +67,7 @@ module E : sig
       {!never} and cannot be restarted. Allows to 
       disable {{!sideeffects}effectful} events. 
 
-      {b Note.} If executed in an {{!update}update step}
+      {b Note.} If executed in an {{!steps}update step}
       the event may still occur in the step. *)
 
   val equal : 'a event -> 'a event -> bool
@@ -236,18 +246,25 @@ module S : sig
   val const : 'a -> 'a signal
   (** [const v] is always [v], \[[const v]\]{_t} [= v]. *)
 
-  val create : ?eq:('a -> 'a -> bool) -> 'a -> 'a signal * ('a -> unit)
+  val create : ?eq:('a -> 'a -> bool) -> 'a -> 
+    'a signal * (?step:step -> 'a -> unit)
   (** [create i] is a primitive signal [s] set to [i] and a
-      [set] function.  [set v] sets the signal's value to [v] at the
-      time it is called and triggers an {{!update}update
-      step}.
-
-      {b Warning.} [send] must not be executed inside an update step. *)
+      [set] function. The function [set] is such that:
+      {ul
+      {- [set v] sets the signal's value to [v] at the time it is called and 
+         triggers an {{!steps}update step}.}
+      {- [set ~step v] sets the signal's value to [v] at the time it is 
+         called and updates it dependencies when [step] is 
+         {{!Step.execute}executed}}
+      {- [set ~step v] raises [Invalid_argument] if it was previously 
+         called with a step and this step has not executed yet or if 
+         the given [step] was already executed.}}
+      {b Warning.} [set] must not be executed inside an update step. *)
 
   val value : 'a signal -> 'a
   (** [value s] is [s]'s current value. 
 
-      {b Warning.} If executed in an {{!update}update
+      {b Warning.} If executed in an {{!steps}update
       step} may return a non up-to-date value or raise [Failure] if
       the signal is not yet initialized. *)
 
@@ -563,7 +580,7 @@ module S : sig
   (** Output signature of {!S.Make} *) 
   module type S = sig
     type 'a v 
-    val create : 'a v -> 'a v signal * ('a v -> unit)
+    val create : 'a v -> 'a v signal * (?step:step -> 'a v -> unit)
     val equal : 'a v signal -> 'a v signal -> bool
     val hold : 'a v -> 'a v event -> 'a v signal
     val app : ('a -> 'b v) signal -> 'a signal -> 'b v signal
@@ -609,6 +626,33 @@ module S : sig
      (** Specialization for floats. *)
      module Sf : S with type 'a v = float
   end
+end
+
+(** Update steps. 
+
+    Update functions returned by {!S.create} and {!E.create}
+    implicitely create and execute update steps when used without
+    specifying their [step] argument. 
+
+    Using explicit {!step} values with these functions gives more control on 
+    the time when the update step is perfomed and allows to perform 
+    simultaneous {{!primitives}primitive} signal updates and event 
+    occurences. See also the documentation about {{!steps}update steps} and 
+    {{!simultaneity}simultaneous events}. *)
+module Step : sig
+
+  (** {1 Steps} *)
+  
+  type t = step
+  (** The type for update steps. *)
+
+  val create : unit -> step
+  (** [create ()] is a new update step. *)
+
+  val execute : step -> unit 
+  (** [execute step] executes the update step. 
+      
+      @raise Invalid_argument if [step] was already executed. *)
 end
 
 (** {1:sem Semantics} 
@@ -695,6 +739,7 @@ let () = List.iter send_x [1; 2; 3]]}
     the signal's value are printed, hence the program prints [123], not [1223].
     See the discussion on 
     {{!sideeffects}side effects} for more details.
+
 {[open React;;
 
 let x, set_x = S.create 1
@@ -703,15 +748,55 @@ let () = List.iter set_x [2; 2; 3]]}
     The {{!clock}clock} example shows how a realtime time 
     flow can be defined.
 
+   {2:steps Update steps} 
+
+   The {!E.create} and {!S.create} functions return update functions
+   used to generate primitive event occurences and set the value of
+   primitive signals. Upon invocation as in the preceding section
+   these functions immediatly create and invoke an update step.
+   The {e update step} automatically updates events and signals that
+   transitively depend on the updated primitive. The dependents of a
+   signal are updated iff the signal's value changed according to its
+   {{!sigeq}equality function}.
+
+   The update functions have an optional [step] argument. If they are
+   given a concrete [step] value created with {!Step.create}, then it
+   updates the event or signal but doesn't update its dependencies. It
+   will only do so whenever [step] is executed with
+   {!Step.execute}. This allows to make primitive event occurences and
+   signal changes simultaneous. See next section for an example.
+
+    {2:simultaneity Simultaneous events}
+
+    {{!steps}Update steps} are made under a 
+    {{:http://dx.doi.org/10.1016/0167-6423(92)90005-V}synchrony hypothesis} :
+    the update step takes no time, it is instantenous. Two event occurrences 
+    are {e simultaneous} if they occur in the same update step. 
+
+    In the code below [w], [x] and [y] will always have simultaneous 
+    occurrences. They {e may} have simulatenous occurences with [z]
+    if [send_w] and [send_z] are used with the same update step. 
+
+{[let w, send_w = E.create ()
+let x = E.map succ w
+let y = E.map succ x
+let z, send_z = E.create ()
+
+let () = 
+  let () = send_w 3 (* w x y occur simultaneously, z doesn't occur *) in
+  let step = Step.create () in 
+  send_w ~step 3; 
+  send_z ~step 4; 
+  Step.execute step (* w x z y occur simultaneously *)
+]}    
+
     {2:update The update step and thread safety}
 
     {{!primitives}Primitives} are the only mean to drive the reactive
     system and they are entirely under the control of the client. When
-    the client invokes a primitive's update function, React performs
-    an update step. The update step automatically updates events and
-    signals that transitively depend on the updated primitive. The
-    dependents of a signal are updated iff the signal's value changed
-    according to its {{!sigeq}equality function}.
+    the client invokes a primitive's update function without the
+    [step] argument or when it invokes {!Step.execute} on a [step]
+    value, React performs an update step.
 
     To ensure correctness in the presence of threads, update steps
     must be executed in a critical section. Let uset([p]) be the set
@@ -720,8 +805,10 @@ let () = List.iter set_x [2; 2; 3]]}
     concurrently is only allowed if uset([p]) and uset([p']) are
     disjoint. Otherwise the updates must be properly serialized.
 
-    Below updates to [x] and [y] must be serialized, but z can
-    be updated concurently to both [x] and [y].
+    Below, concurrent, updates to [x] and [y] must be serialized (or
+    performed on the same step if it makes sense semantically), but z
+    can be updated concurently to both [x] and [y].
+
 {[open React;;
 
 let x, set_x = S.create 0
@@ -729,29 +816,11 @@ let y, send_y = E.create ()
 let z, set_z = S.create 0
 let max_xy = S.l2 (fun x y -> if x > y then x else y) x (S.hold 0 y)
 let succ_z = S.map succ z]}
-    {2:simultaneity Simultaneous events}
 
-    {{!update}Update steps} are made under a 
-    {{:http://dx.doi.org/10.1016/0167-6423(92)90005-V}synchrony hypothesis} :
-    the update step takes no time, it is instantenous. 
-
-    Two event occurrences are {e simultaneous} if they occur in the
-    same update step; in other words if there exists a primitive on
-    which they both depend. By definition a primitive doesn't depend
-    on any primitive it is therefore impossible for two primitive
-    events to occur simultaneously.
-
-
-    In the code below [w], [x] and [y] will have simultaneous occurrences while
-    [z] will never have simultaneous occurrences with them.
-{[let w, send_w = E.create ()
-let x = E.map succ w
-let y = E.map succ x
-let z, send_z = E.create ()]}    
     {2:sideeffects Side effects}
 
     Effectful events and signals perform their side effect
-    exactly {e once} in each {{!update}update step} in which there
+    exactly {e once} in each {{!steps}update step} in which there
     is an update of at least one of the event or signal it depends on.
 
     Remember that a signal updates in a step iff its 

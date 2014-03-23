@@ -9,6 +9,9 @@ let err_sig_undef = "signal value undefined yet"
 let err_fix = "trying to fix a delayed value"
 let err_retain_never = "E.never cannot retain a closure"
 let err_retain_cst_sig = "constant signals cannot retain a closure"
+let err_step_executed = "step already executed" 
+let err_event_scheduled = "event already scheduled on a step"
+let err_signal_scheduled = "signal already scheduled on a step"
   
 module Wa = struct                  
   type 'a t = { mutable arr : 'a Weak.t; mutable len : int }
@@ -272,9 +275,11 @@ end
 let delayed_rank = max_int 
   
 module Step = struct                                       (* Update steps. *)
+  type t = step
   let nil = { over = true; heap = Wa.create 0; eops = []; cops = []}
-  let create n =
-    let h = Wa.create (3 * Wa.length n.deps) in 
+
+  let create () =
+    let h = Wa.create 11 in 
     { over = false; heap = h; eops = []; cops = []}
     
   let add c n = if n.stamp == c then () else (n.stamp <- c; H.add c.heap n)
@@ -291,13 +296,16 @@ module Step = struct                                       (* Update steps. *)
     let rec update c = match H.take c.heap with
     | Some n when n.rank <> delayed_rank -> n.update c; update c 
     | Some n -> 
-        let c' = create n in
+        let c' = create () in
         eops c; List.iter (fun n -> n.update c') (n :: H.els c.heap); cops c;
         finish c;
         execute c' 
     | None -> eops c; cops c; finish c
     in
     update c
+
+  let execute c = if c.over then invalid_arg err_step_executed else execute c
+
       
   let find_unfinished nl = (* find unfinished step in recursive producers. *)
     let rec aux next = function            (* zig-zag breadth-first search. *)
@@ -400,11 +408,17 @@ module E = struct
     Node.add_dep m.enode n;
     if !(m.ev) <> None then Step.add m.enode.stamp n
         
-  let send m v =                                  (* starts an update step. *)
-    let c = Step.create m.enode in
-    m.enode.stamp <- c;
-    eupdate v m c;
-    Step.execute c
+  let send m ?step v = match step with          (* sends an event occurence. *)
+  | Some c ->
+      if c.over then invalid_arg err_step_executed else
+      if m.enode.stamp != Step.nil then invalid_arg err_event_scheduled else
+      m.enode.stamp <- c; 
+      eupdate v m c
+  | None ->
+      let c = Step.create () in
+      m.enode.stamp <- c;
+      eupdate v m c;
+      Step.execute c
 
   (* Basics *)
 
@@ -729,13 +743,21 @@ module S = struct
   type 'a t = 'a signal
       
   let set_sval v m c = m.sv <- Some v; Step.add_deps c m.snode
-  let set m v =                                   (* starts an update step. *)
+  let set m ?step v =                             (* starts an update step. *)
     if m.eq (sval m) v then () else
-    let c = Step.create m.snode in
-    m.snode.stamp <- c;
-    m.sv <- Some v; 
-    Step.add_deps c m.snode;
-    Step.execute c
+    match step with 
+    | Some c -> 
+        if c.over then invalid_arg err_step_executed else
+        if m.snode.stamp != Step.nil then invalid_arg err_signal_scheduled else
+        m.snode.stamp <- c; 
+        m.sv <- Some v; 
+        Step.add_deps c m.snode
+    | None -> 
+        let c = Step.create () in
+        m.snode.stamp <- c;
+        m.sv <- Some v; 
+        Step.add_deps c m.snode;
+        Step.execute c
       
   (* Basics *)
       
@@ -1052,7 +1074,7 @@ module S = struct
       match Step.find_unfinished nl with
       | c when c == Step.nil -> 
           (* no pertinent occuring step, create a step for update. *)
-          let c = Step.create n in 
+          let c = Step.create () in 
           n.update c;
           Step.execute c
       | c -> Step.add c n
@@ -1268,7 +1290,7 @@ module S = struct
   
   module type S = sig
     type 'a v 
-    val create : 'a v -> 'a v signal * ('a v -> unit)
+    val create : 'a v -> 'a v signal * (?step:step -> 'a v -> unit)
     val equal : 'a v signal -> 'a v signal -> bool
     val hold : 'a v -> 'a v event -> 'a v signal
     val app : ('a -> 'b v) signal -> 'a signal -> 'b v signal
