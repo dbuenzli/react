@@ -1,0 +1,8 @@
+version = "%%VERSION%%"
+description = "Declarative events and signals for OCaml"
+archive(byte) = "react.cma"
+archive(byte, plugin) = "react.cma"
+archive(native) = "react.cmxa"
+archive(native, plugin) = "react.cmxs"
+exists_if = "react.cma"
+
