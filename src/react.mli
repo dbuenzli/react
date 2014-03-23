@@ -942,32 +942,32 @@ let diverge =                 (* diverges *)
   reactive value [v], it is first stopped and then it walks over the
   list [prods] of events and signals that it depends on and
   unregisters itself from these ones as a dependent (something that is
-  normally automatically tackled by the fact that dependents are
-  stored in a weak array). Then for each element of [prod] that has no
-  dependents anymore and is not a primitive it stops them aswell and
-  recursively.
+  normally automatically done when [v] is garbage collected since
+  dependents are stored in a weak array). Then for each element of
+  [prod] that has no dependents anymore and is not a primitive it
+  stops them aswell and recursively.
 
-  The stop call with [~strong:true] is more involved. But used
-  judiciously on the leaves of the reactive system when a reactive
-  value is no longer needed it allows to prevent memory leaks.
+  A stop call with [~strong:true] is more involved. But it allows to
+  prevent memory leaks when used judiciously on the leaves of the
+  reactive system that are no longer used.
 
   {b Warning.} It should be noted that if direct references are kept
-  on intermediate events or signals of the reactive system these may
-  suddenly stop updating if all its dependents strongly stopped. In
+  on an intermediate event or signal of the reactive system it may
+  suddenly stop updating if all its dependents were strongly stopped. In
   the example below, [e1] will {e never} occur:
 {[let e, e_send = E.create ()
 let e1 = E.map (fun x -> x + 1) e (* never occurs *)
 let () = 
-  let e2 = E.map e1 in 
+  let e2 = E.map (fun x -> x + 1) e1 in 
   E.stop ~strong:true e2
 ]}
   This can be side stepped by making an artificial dependency to keep 
   the reference:
 {[let e, e_send = E.create ()
-let e1 = E.map (fun x -> x + 1) e 
+let e1 = E.map (fun x -> x + 1) e (* may still occur *)
 let e1_ref = E.map (fun x -> x) e1 
 let () = 
-  let e2 = E.map e1 in 
+  let e2 = E.map (fun x -> x + 1) e1 in
   E.stop ~strong:true e2
 ]}
 
