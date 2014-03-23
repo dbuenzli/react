@@ -62,10 +62,14 @@ module E : sig
 
       {b Raises.} [Invalid_argument] on {!E.never}. *)
 
-  val stop : 'a event -> unit
+  val stop : ?strong:bool -> 'a event -> unit
   (** [stop e] stops [e] from occuring. It conceptually becomes
       {!never} and cannot be restarted. Allows to 
       disable {{!sideeffects}effectful} events. 
+
+      The [strong] argument should only be used on platforms
+      where weak arrays have a strong semantics (i.e. JavaScript). 
+      See {{!strongstop}details}. 
 
       {b Note.} If executed in an {{!steps}update step}
       the event may still occur in the step. *)
@@ -279,10 +283,14 @@ module S : sig
   val eq_fun : 'a signal -> ('a -> 'a -> bool) option
   (**/**)
 
-  val stop : 'a signal -> unit
+  val stop : ?strong:bool -> 'a signal -> unit
   (** [stop s], stops updating [s]. It conceptually becomes {!const}
       with the signal's last value and cannot be restarted. Allows to
       disable {{!sideeffects}effectful} signals.
+
+      The [strong] argument should only be used on platforms
+      where weak arrays have a strong semantics (i.e. JavaScript). 
+      See {{!strongstop}details}. 
 
       {b Note.} If executed in an update step the signal may 
       still update in the step. *)
@@ -922,6 +930,46 @@ let diverge =                 (* diverges *)
   other. Fixed point combinators will raise [Invalid_argument] if
   such dependencies are created. This limitation can be
   circumvented by mapping these values with the identity. 
+
+  {2:strongstop Strong stops} 
+
+  Strong stops should only be used on platforms where weak arrays have
+  a strong semantics (i.e. JavaScript). You can safely ignore that
+  section and the [strong] argument of {!E.stop} and {!S.stop}
+  if that's not the case.
+
+  Whenever {!E.stop} and {!S.stop} is called with [~strong:true] on a
+  reactive value [v], it is first stopped and then it walks over the
+  list [prods] of events and signals that it depends on and
+  unregisters itself from these ones as a dependent (something that is
+  normally automatically tackled by the fact that dependents are
+  stored in a weak array). Then for each element of [prod] that has no
+  dependents anymore and is not a primitive it stops them aswell and
+  recursively.
+
+  The stop call with [~strong:true] is more involved. But used
+  judiciously on the leaves of the reactive system when a reactive
+  value is no longer needed it allows to prevent memory leaks.
+
+  {b Warning.} It should be noted that if direct references are kept
+  on intermediate events or signals of the reactive system these may
+  suddenly stop updating if all its dependents strongly stopped. In
+  the example below, [e1] will {e never} occur:
+{[let e, e_send = E.create ()
+let e1 = E.map (fun x -> x + 1) e (* never occurs *)
+let () = 
+  let e2 = E.map e1 in 
+  E.stop ~strong:true e2
+]}
+  This can be side stepped by making an artificial dependency to keep 
+  the reference:
+{[let e, e_send = E.create ()
+let e1 = E.map (fun x -> x + 1) e 
+let e1_ref = E.map (fun x -> x) e1 
+let () = 
+  let e2 = E.map e1 in 
+  E.stop ~strong:true e2
+]}
 
   {1:ex Examples} 
 

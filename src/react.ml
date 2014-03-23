@@ -23,6 +23,14 @@ module Wa = struct
 
   let create size = { arr = Weak.create size; len = 0 }
   let length a = a.len
+  let is_empty a = 
+    try 
+      for i = 0 to a.len - 1 do 
+        if Weak.check a.arr i then raise Exit; 
+      done; 
+      true
+    with Exit -> false
+    
   let clear a = a.arr <- Weak.create 0; a.len <- 0
   let get a i = Weak.get a.arr i
   let set a i = Weak.set a.arr i
@@ -331,12 +339,38 @@ module Node = struct
   let create r = 
     { rank = r; stamp = Step.nil; update = nop; retain = nop;
       producers = no_producers; deps = Wa.create 0 }
-    
-  let bind n p u = n.producers <- p; n.update <- u
-  let stop n = n.producers <- no_producers; n.update <- nop; Wa.clear n.deps
+
   let rem_dep n n' = Wa.rem n.deps n'
   let add_dep n n' = Wa.scan_add n.deps n'
-  let deps n = Wa.fold (fun acc d -> d :: acc) [] n.deps
+  let has_dep n = not (Wa.is_empty n.deps)
+  let deps n = Wa.fold (fun acc d -> d :: acc) [] n.deps    
+
+  let bind n p u = n.producers <- p; n.update <- u
+  let stop ?(strong = false) n = 
+    if not strong then begin 
+      n.producers <- no_producers; n.update <- nop; Wa.clear n.deps; 
+    end else begin 
+      let rec loop next to_rem = function 
+      | [] -> 
+          begin match next with 
+          | (to_rem, prods) :: next -> loop next to_rem prods
+          | [] -> ()
+          end     
+      | n :: todo -> 
+          rem_dep n to_rem;   (* N.B. rem_dep could be combined with has_dep *)
+          if n.rank = min_rank (* is a primitive *) || has_dep n 
+          then loop next to_rem todo else 
+          begin 
+            let prods = n.producers () in
+            n.producers <- no_producers; n.update <- nop; Wa.clear n.deps;
+            loop ((n, prods) :: next) to_rem todo
+          end
+      in
+      let producers = n.producers () in
+      n.producers <- no_producers; n.update <- nop; Wa.clear n.deps;
+      loop [] n producers
+    end
+      
   let set_rank n r = n.rank <- r
   let rmin = create min_rank
   let rmax n n' = if n.rank > n'.rank then n else n'
@@ -431,7 +465,7 @@ module E = struct
   | Never -> invalid_arg err_retain_never 
   | Emut m -> let c' = m.enode.retain in (m.enode.retain <- c); (`R c')
                                                                 
-  let stop = function Never -> () | Emut m -> Node.stop m.enode
+  let stop ?strong = function Never -> () | Emut m -> Node.stop ?strong m.enode
   let equal e e' = match e, e' with
   | Never, Never -> true
   | Never, _ | _, Never -> false
@@ -777,7 +811,9 @@ module S = struct
   | Const v | Smut { sv = Some v }  -> v
   | Smut { sv = None } -> failwith err_sig_undef
                             
-  let stop = function Const _ -> () | Smut m -> Node.stop m.snode
+  let stop ?strong = 
+    function Const _ -> () | Smut m -> Node.stop ?strong m.snode
+
   let equal ?(eq = ( = )) s s' = match s, s' with
   | Const v, Const v' -> eq v v'
   | Const _, _ | _, Const _ -> false

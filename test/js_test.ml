@@ -2,6 +2,8 @@
 
 open React
 
+let strong = true 
+
 (* Artificially increase memory usage *) 
 let high_e e = 
   let id e = E.map (fun v -> v) e in 
@@ -38,7 +40,7 @@ let tick, send_tick = E.create ()
 let rec loop () = 
   let ev = E.map (fun () -> incr_counter ()) (high_e tick) in
   send_tick ();
-  E.stop ev;
+  E.stop ~strong ev;
   ignore (Dom_html.window ## setTimeout (Js.wrap_callback loop, 1.))
   
 
