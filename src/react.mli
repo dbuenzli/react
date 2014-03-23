@@ -108,7 +108,7 @@ module E : sig
   (** [filter p e] are [e]'s occurrences that satisfy [p]. 
       {ul
       {- \[[filter p e]\]{_t} [= Some v] if \[[e]\]{_t} [= Some v] and 
-	[p v = true]}
+      [p v = true]}
       {- \[[filter p e]\]{_t} [= None] otherwise.}} *)
 
   val fmap : ('a -> 'b option) -> 'a event -> 'b event
@@ -193,11 +193,11 @@ module E : sig
 
   val merge : ('a -> 'b -> 'a) -> 'a -> 'b event list -> 'a event
       (** [merge f a el] merges the {{!simultaneity}simultaneous}
-	  occurrences of every event in [el] using [f] and the accumulator [a].
-	  
-	  \[[merge f a el]\]{_ t} 
-	  [= List.fold_left f a (List.filter (fun o -> o <> None) 
-				   (List.map] \[\]{_t}[ el))]. *)
+    occurrences of every event in [el] using [f] and the accumulator [a].
+    
+    \[[merge f a el]\]{_ t} 
+    [= List.fold_left f a (List.filter (fun o -> o <> None) 
+           (List.map] \[\]{_t}[ el))]. *)
 
   val switch : 'a event -> 'a event event -> 'a event 
   (** [switch e ee] is [e]'s occurrences until there is an 
@@ -206,7 +206,7 @@ module E : sig
       {ul
       {- \[[switch e ee]\]{_ t} [=] \[[e]\]{_t} if \[[ee]\]{_<=t} [= None].}
       {- \[[switch e ee]\]{_ t} [=] \[[e']\]{_t} if \[[ee]\]{_<=t} 
-	  [= Some e'].}} *)
+    [= Some e'].}} *)
 
   val fix : ('a event -> 'a event * 'b) -> 'b
   (** [fix ef] allows to refer to the value an event had an
@@ -367,7 +367,7 @@ module S : sig
          where t' is the greatest t' <= t with \[[c]\]{_t'} [= None] and
          \[[s]\]{_t'-dt} [<>] \[[s]\]{_t'}}
        {- \[[dismiss_ c i s]\]{_0} [=] [v] where [v = i] if
-	  \[[c]\]{_0} [= Some _] and [v =] \[[s]\]{_0} otherwise.}} *)
+    \[[c]\]{_0} [= Some _] and [v =] \[[s]\]{_0} otherwise.}} *)
 
   (** {1:acc Accumulating} *)
 
@@ -383,10 +383,10 @@ module S : sig
   val merge : ?eq:('a -> 'a -> bool) -> ('a -> 'b -> 'a) -> 'a ->
     'b signal list -> 'a signal
       (** [merge f a sl] merges the value of every signal in [sl]
-	  using [f] and the accumulator [a]. 
-	  
-	  \[[merge f a sl]\]{_ t} 
-	  [= List.fold_left f a (List.map] \[\]{_t}[ sl)]. *)
+    using [f] and the accumulator [a]. 
+    
+    \[[merge f a sl]\]{_ t} 
+    [= List.fold_left f a (List.map] \[\]{_t}[ sl)]. *)
 
   val switch : ?eq:('a -> 'a -> bool) -> 'a signal -> 'a signal event -> 
     'a signal
@@ -396,7 +396,7 @@ module S : sig
       {ul
       {- \[[switch s es]\]{_ t} [=] \[[s]\]{_t} if \[[es]\]{_<=t} [= None].}
       {- \[[switch s es]\]{_ t} [=] \[[s']\]{_t} if \[[es]\]{_<=t} 
-	  [= Some s'].}} *)
+    [= Some s'].}} *)
 
   val fix : ?eq:('a -> 'a -> bool) -> 'a -> ('a signal -> 'a signal * 'b) -> 'b
   (** [fix i sf] allow to refer to the value a signal had an
@@ -584,11 +584,11 @@ module S : sig
     val l4 : ('a -> 'b -> 'c -> 'd -> 'e v) -> 
       ('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e v signal) 
     val l5 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f v) -> 
-	('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal -> 
-	  'f v signal) 
+  ('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal -> 
+    'f v signal) 
     val l6 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g v) -> 
-	('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal -> 
-	  'f signal -> 'g v signal) 
+  ('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal -> 
+    'f signal -> 'g v signal) 
   end
 
   (** Functor specializing the combinators for the given signal value type *)

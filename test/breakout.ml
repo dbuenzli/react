@@ -157,13 +157,14 @@ module Game : sig                              (* Game simulation and logic. *)
   val collisions : t -> unit event
   val outcome : t -> [> `Game_over of int ] event
 end = struct
-  type t = { walls : Rect.t;
-	     ball : Rect.t signal;
-	     paddle : Rect.t signal;
-	     bricks : Rect.t list signal;
-	     brick_count : int signal;
-	     collisions : unit event }
-
+  type t = 
+    { walls : Rect.t;
+      ball : Rect.t signal;
+      paddle : Rect.t signal;
+      bricks : Rect.t list signal;
+      brick_count : int signal;
+      collisions : unit event }
+    
   (* Collisions *)
 
   let ctime c r d n = Some (n, (r -. c) /. d) 
@@ -173,12 +174,12 @@ end = struct
   | d when d < 0. ->
       if rmax -. d < cmin then None else                    (* moving apart. *)
       if rmin -. d >= cmax then 
-	if rmin <= cmax then ctime cmax rmin d n else None
+        if rmin <= cmax then ctime cmax rmin d n else None
       else Some (V2.o, 0.)                         (* initially overlapping. *)
   | d when d > 0. ->
       if rmin -. d > cmax then None else                    (* moving apart. *)
       if rmax -. d <= cmin then 
-	if rmax >= cmin then ctime cmin rmax d (V2.neg n) else None
+        if rmax >= cmin then ctime cmin rmax d (V2.neg n) else None
       else Some (V2.o, 0.)                         (* initially overlapping. *)
   | _ (* d = 0. *) ->
     if cmax < rmin || rmax < cmin then None else Some (V2.o, 0.) 
@@ -188,14 +189,14 @@ end = struct
     match inter Rect.xmin Rect.xmax c r (V2.x d) V2.ex with
     | None -> None 
     | Some (_, t as x) -> 
-	match inter Rect.ymin Rect.ymax c r (V2.y d) V2.ey with
-	| None -> None
-	| Some (_, t' as y) -> 
-	    let _, t as c = if t > t' then x else y in 
-	    if t = 0. then None else Some c
-
+        match inter Rect.ymin Rect.ymax c r (V2.y d) V2.ey with
+        | None -> None
+        | Some (_, t' as y) -> 
+            let _, t as c = if t > t' then x else y in 
+            if t = 0. then None else Some c
+                
   (* Game objects *)
-	      
+        
   let moving_rect pos size = S.map (fun pos -> Rect.create pos size) pos
 
   let ball walls dt collisions = 
@@ -226,16 +227,16 @@ end = struct
     let top = Rect.ymin walls in
     let collisions = 
       let collide dp ball =
-	let c = match cmin left (Rect.xmin ball) (V2.x dp) V2.ex with
-	| Some _ as c -> c
-	| None -> 
-	    match cmax right (Rect.xmax ball) (V2.x dp) (V2.neg V2.ex) with
-	    | Some _ as c -> c
-	    | None -> cmin top (Rect.ymin ball) (V2.y dp) V2.ey
-	in
-	match c with 
-	| None -> None 
-	| Some (n, t) -> Some (n, V2.sub (Rect.o ball) (V2.smul t dp))
+        let c = match cmin left (Rect.xmin ball) (V2.x dp) V2.ex with
+        | Some _ as c -> c
+        | None -> 
+            match cmax right (Rect.xmax ball) (V2.x dp) (V2.neg V2.ex) with
+            | Some _ as c -> c
+            | None -> cmin top (Rect.ymin ball) (V2.y dp) V2.ey
+        in
+        match c with 
+        | None -> None 
+        | Some (n, t) -> Some (n, V2.sub (Rect.o ball) (V2.smul t dp))
       in
       E.fmap (fun x -> x) (S.sample collide dp ball) 
     in
@@ -248,12 +249,12 @@ end = struct
     let xmax = Rect.xmax walls -. (V2.x size) in 
     let p0 = V2.v (0.5 *. xmax) (Rect.ymax walls -. 2.) in
     let control p = function 
-      | `Left -> 
-	  let x' = V2.x p -. speed in
-	  if x' < xmin then V2.v xmin (V2.y p) else V2.v x' (V2.y p)
-      | `Right -> 
-	  let x' = V2.x p +. speed in 
-	  if x' > xmax then V2.v xmax (V2.y p) else V2.v x' (V2.y p)
+    | `Left -> 
+        let x' = V2.x p -. speed in
+        if x' < xmin then V2.v xmin (V2.y p) else V2.v x' (V2.y p)
+    | `Right -> 
+        let x' = V2.x p +. speed in 
+        if x' > xmax then V2.v xmax (V2.y p) else V2.v x' (V2.y p)
     in
     let paddle = moving_rect (S.fold control p0 moves) size in 
     let collisions = 
@@ -275,28 +276,28 @@ end = struct
       let y_count = truncate (h /. bh) in
       let acc = ref [] in
       for x = 0 to x_count - 1 do 
-	for y = 0 to y_count - 1 do
+        for y = 0 to y_count - 1 do
           let x = Rect.xmin walls +. (float x) *. bw in
           let y = Rect.ymin walls +. 2. *. bh +. (float y) *. bh in
           acc := Rect.create (V2.v x y) (V2.v bw bh) :: !acc
-	done
+        done
       done;
       !acc
     in
     let define bricks =
       let cresult = 
-	let collide dp (ball, bricks) = 
-	  let rec aux c acc bricks ball dp = match bricks with
-	  | [] -> c, List.rev acc 
-	  | b :: bricks' -> match crect b ball dp with
-	    | None -> aux c (b :: acc) bricks' ball dp
-	    | c  -> aux c acc bricks' ball dp
-	  in
-	  match aux None [] bricks ball dp with
-	  | None, bl -> None, bl
-	  | Some (n, t), bl -> Some (n, V2.sub (Rect.o ball) (V2.smul t dp)),bl
-	in
-	S.sample collide dp (S.Pair.pair ball bricks) 
+        let collide dp (ball, bricks) = 
+          let rec aux c acc bricks ball dp = match bricks with
+          | [] -> c, List.rev acc 
+          | b :: bricks' -> match crect b ball dp with
+          | None -> aux c (b :: acc) bricks' ball dp
+          | c  -> aux c acc bricks' ball dp
+          in
+          match aux None [] bricks ball dp with
+          | None, bl -> None, bl
+          | Some (n, t), bl -> Some (n, V2.sub (Rect.o ball) (V2.smul t dp)),bl
+        in
+        S.sample collide dp (S.Pair.pair ball bricks) 
       in
       let collisions = E.fmap (fun (c, _) -> c) cresult in
       let bricks_e = E.map (fun (_, bl) -> fun _ -> bl) cresult in
@@ -315,12 +316,12 @@ end = struct
       let bricks, bcollisions = bricks w ball in
       let collisions' = E.select [pcollisions; wcollisions; bcollisions] in
       let g = 
-	{ walls = walls; 
-	  ball = S.dismiss collisions' Rect.empty (fst ball);
-	  paddle = paddle; 
-	  bricks = bricks; 
-	  brick_count = S.map List.length bricks;
-	  collisions = E.stamp collisions' () }
+        { walls = walls; 
+          ball = S.dismiss collisions' Rect.empty (fst ball);
+          paddle = paddle; 
+          bricks = bricks; 
+          brick_count = S.map List.length bricks;
+          collisions = E.stamp collisions' () }
       in
       collisions', g
     in
@@ -342,7 +343,7 @@ end
 module Render = struct                          
   let str = Printf.sprintf 
   let str_bricks count = if count = 1 then "1 brick" else str "%d bricks" count
-
+        
   let intro title_color =                        (* draws the splash screen. *)
     let x = 0.5 *. Rect.xmax Draw.frame in
     let y = 0.5 *. Rect.ymax Draw.frame in 
@@ -352,13 +353,13 @@ module Render = struct
       "Hit 'a' and 'd' to move the paddle, 'q' to quit";
     Draw.text ~color:31 (V2.v x (y +. 2.)) "Hit spacebar to start the game";
     Draw.flush ()
-
+      
   let game_init m =                              (* draws game init message. *)
     let x = 0.5 *. Rect.xmax Draw.frame in 
     let y = 0.5 *. Rect.ymax Draw.frame in 
     Draw.text ~color:31 (V2.v x (y +. 2.)) m; 
     Draw.flush ()
-
+      
   let game ball paddle bricks bcount =              (* draws the game state. *)
     let bl = V2.v (Rect.xmin Draw.frame) (Rect.ymax Draw.frame -. 1.) in
     Draw.clear ();
@@ -367,7 +368,7 @@ module Render = struct
     Draw.rect ~color:41 ball;
     Draw.text ~center:false ~color:30 bl (str "%s left" (str_bricks bcount));
     Draw.flush ()
-
+      
   let game_over outcome =                     (* draws the game over screen. *)
     let x = 0.5 *. Rect.xmax Draw.frame in 
     let y = 0.5 *. Rect.ymax Draw.frame in
@@ -387,17 +388,17 @@ end = struct
   let key k = E.fmap (fun c -> if c = k then Some () else None) Input.key
   let quit () = E.once (E.stamp (key 'q') `Quit)
   let new_game () = E.once (E.stamp (key ' ') `Game)
-
+      
   let wait_until ?stop e = match stop with
   | Some s -> E.map (fun v -> s (); v) (E.once e)
   | None -> E.once e
-      
+              
   let intro () =
     let color_swap = E.stamp Input.time (fun c -> if c = 31 then 34 else 31) in
     let output = S.l1 Render.intro (S.accum color_swap 34) in
     let stop () = S.stop output in
     wait_until (E.select [quit (); new_game ()]) ~stop
-
+      
   let game () =
     let run = S.hold false (E.once (E.stamp (key ' ') true)) in
     let moves =
@@ -409,7 +410,7 @@ end = struct
     let outcome = Game.outcome g in 
     let sound = E.map Draw.beep (Game.collisions g) in
     let output = S.l4 Render.game (Game.ball g) (Game.paddle g) (Game.bricks g)
-	(Game.brick_count g)
+        (Game.brick_count g)
     in
     let stop () = E.stop sound; S.stop output in
     Render.game_init "Hit spacebar to start the game";
@@ -422,12 +423,12 @@ end = struct
   let init () = 
     let define ui = 
       let display ui = 
-	Gc.full_major ();                           (* cleanup game objects. *)
-	match ui with
-	| `Intro -> intro ()
-	| `Game -> game ()
-	| `Game_over outcome -> game_over outcome
-	| `Quit -> exit 0
+        Gc.full_major ();                           (* cleanup game objects. *)
+        match ui with
+        | `Intro -> intro ()
+        | `Game -> game ()
+        | `Game_over outcome -> game_over outcome
+        | `Quit -> exit 0
       in
       let ui' = E.switch (display `Intro) (E.map display ui) in
       ui', ui'

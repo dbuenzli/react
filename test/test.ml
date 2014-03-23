@@ -15,7 +15,7 @@ let pp_list ppv pp l =
   Format.fprintf pp "@[["; 
   List.iter (fun v -> Format.fprintf pp "%a;@ " ppv v) l;
   Format.fprintf pp "]@]"
-
+    
 let pr_value pp name v = Format.printf "@[<hov 2>%s =@ %a@]@." name pp v  
 let e_pr ?iff pp name e = E.trace ?iff (pr_value pp name) e
 let s_pr ?iff pp name s = S.trace ?iff (pr_value pp name) s
@@ -473,9 +473,9 @@ let test_map_filter_fmap () =
   Gc.full_major ();
   List.iter set_x [ 1; 2; 3; 4; 4; 5; 5]; 
   List.iter empty [assert_x2; assert_fe; assert_fo; assert_fme;
-		   assert_fmo; !assert_dx2; !assert_dhx2; !assert_dfe; 
-		   !assert_dhfe; !assert_dfo ; !assert_dhfo; !assert_dfme ; 
-		   !assert_dhfme ; !assert_dfmo ; !assert_dhfmo ];
+                   assert_fmo; !assert_dx2; !assert_dhx2; !assert_dfe; 
+                   !assert_dhfe; !assert_dfo ; !assert_dhfo; !assert_dfme ; 
+                   !assert_dhfme ; !assert_dfmo ; !assert_dhfmo ];
   keep_sref create_dyn
 
 
@@ -504,7 +504,7 @@ let test_diff_changes () =
   Gc.full_major ();
   List.iter send_e [1; 1; 3; 3; 4; 4]; 
   List.iter empty [assert_d; assert_c; !assert_dd; !assert_dhd; !assert_dc;
-		   !assert_dhc];
+                   !assert_dhc];
   keep_sref create_dyn
 
 let test_sample () = 
@@ -555,7 +555,7 @@ let test_when () =
   Gc.full_major ();
   List.iter set_s [ 1; 3; 1; 2; 4; 4; 6; 1; 3; 4 ];
   List.iter empty [assert_se; assert_so; !assert_dse; !assert_dhse;
-		   !assert_dso; !assert_dhso];
+                   !assert_dso; !assert_dhso];
   keep_sref create_dyn
 
 let test_dismiss () = 
@@ -815,7 +815,7 @@ let test_fix () =
   Gc.full_major ();
   List.iter set_s [0; 1; 1; 2; 3];
   List.iter empty [assert_h; assert_hm; !assert_dh; !assert_dhm; 
-		   !assert_dhh; !assert_dhhm];
+                   !assert_dhh; !assert_dhhm];
   keep_sref create_dyn
 
 let test_fix' () = 
@@ -859,7 +859,7 @@ let test_fix' () =
   List.iter set_s [0; 1; 1; 2; 3];
   List.iter set_f [1];
   List.iter empty [!assert_cs; !assert_chs; !assert_cdhs;
-		   !assert_ss; !assert_shs; !assert_sdhs;
+                   !assert_ss; !assert_shs; !assert_sdhs;
                    !assert_fs; !assert_fhs; !assert_fdhs];
   keep_sref create_dyn
 
@@ -907,7 +907,7 @@ let test_lifters () =
   Gc.full_major ();
   List.iter set_x [0; 1];
   List.iter empty [ a_x1; a_x2; a_x3; a_x4; a_x5; a_x6; !a_dx1; !a_dx2; !a_dx3; 
-		    !a_dx4; !a_dx5; !a_dx6 ];
+                    !a_dx4; !a_dx5; !a_dx6 ];
   keep_sref create_dyn
 
 let test_signals () =   
@@ -955,7 +955,6 @@ let test_jake_heap_bug () =
   let a_h = vals h [ 1; 5 ] in 
   set_a 2;
   empty a_h
-
 
 let test_misc () = test_jake_heap_bug ()
   

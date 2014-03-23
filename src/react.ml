@@ -9,7 +9,7 @@ let err_sig_undef = "signal value undefined yet"
 let err_fix = "trying to fix a delayed value"
 let err_retain_never = "E.never cannot retain a closure"
 let err_retain_cst_sig = "constant signals cannot retain a closure"
-
+  
 module Wa = struct                  
   type 'a t = { mutable arr : 'a Weak.t; mutable len : int }
   (* The type for resizeable weak arrays. 
@@ -27,41 +27,41 @@ module Wa = struct
     let v = Weak.get a.arr i' in                
     Weak.blit a.arr i a.arr i' 1;     (* blit prevents i from becoming live. *)
     Weak.set a.arr i v
-
+      
   let grow a =
     let arr' = Weak.create (2 * (a.len + 1)) in
     Weak.blit a.arr 0 arr' 0 a.len;
     a.arr <- arr'
-	
+      
   let add a v =                                   (* adds v at the end of a. *)
     if a.len = Weak.length a.arr then grow a;
     Weak.set a.arr a.len (Some v);
     a.len <- a.len + 1
-	
+             
   let scan_add a v =  (* adds v to a, tries to find an empty slot, O(a.len). *)
     try
       for i = 0 to a.len - 1 do
-	match Weak.get a.arr i with
-	| None -> Weak.set a.arr i (Some v); raise Exit | Some _ -> ()
+        match Weak.get a.arr i with
+        | None -> Weak.set a.arr i (Some v); raise Exit | Some _ -> ()
       done;
       add a v
     with Exit -> ()
-
+                 
   let rem_last a = let l = a.len - 1 in (a.len <- l; Weak.set a.arr l None)
   let rem a v =       (* removes v from a, uses physical equality, O(a.len). *)
     try 
       for i = 0 to a.len - 1 do  
-	match Weak.get a.arr i with
-	| Some v' when  v == v' -> Weak.set a.arr i None; raise Exit
-	| _ -> ()
+        match Weak.get a.arr i with
+        | Some v' when  v == v' -> Weak.set a.arr i None; raise Exit
+        | _ -> ()
       done
     with Exit -> ()
-    
+                 
   let iter f a =
-      for i = 0 to a.len - 1 do
-	match Weak.get a.arr i with Some v -> f v | None -> ()
-      done 
-      
+    for i = 0 to a.len - 1 do
+      match Weak.get a.arr i with Some v -> f v | None -> ()
+    done 
+    
   let fold f acc a = 
     let acc = ref acc in 
     for i = 0 to a.len - 1 do
@@ -71,12 +71,12 @@ module Wa = struct
 end
 
 type node = 
-    { mutable rank : int;        (* its rank (height) in the dataflow graph. *)
-      mutable stamp : step;          (* last step in which it was scheduled. *)
-      mutable retain : unit -> unit; (* retained by the node, NEVER invoked. *)
-      mutable producers : unit -> node list;   (* nodes on which it depends. *) 
-      mutable update : step -> unit;                      (* update closure. *)
-      deps : node Wa.t }              (* weak references to dependent nodes. *)
+  { mutable rank : int;        (* its rank (height) in the dataflow graph. *)
+    mutable stamp : step;          (* last step in which it was scheduled. *)
+    mutable retain : unit -> unit; (* retained by the node, NEVER invoked. *)
+    mutable producers : unit -> node list;   (* nodes on which it depends. *) 
+    mutable update : step -> unit;                      (* update closure. *)
+    deps : node Wa.t }              (* weak references to dependent nodes. *)
 (* The type for nodes. 
 
    Each event and (non-constant) signal has an associated node. The
@@ -93,10 +93,10 @@ type node =
    Step.execute). *)
 
 and step = 
-    { mutable over : bool;                    (* true when the step is over. *)
-      mutable heap : heap;              (* min-heap of nodes sorted by rank. *)
-      mutable eops : (unit -> unit) list;         (* end of step operations. *)
-      mutable cops : (unit -> unit) list }       (* cleanup step operations. *)
+  { mutable over : bool;                    (* true when the step is over. *)
+    mutable heap : heap;              (* min-heap of nodes sorted by rank. *)
+    mutable eops : (unit -> unit) list;         (* end of step operations. *)
+    mutable cops : (unit -> unit) list }       (* cleanup step operations. *)
 (* The type for update steps.
    
    Note for historical reasons we use the variable names [c] and [c'] 
@@ -144,8 +144,8 @@ and heap = node Wa.t
    by percolating down from that point. *)
 
 type 'a emut = 
-    { ev : 'a option ref;     (* during steps, holds a potential occurence. *)
-      enode : node; }                                    (* associated node. *)
+  { ev : 'a option ref;     (* during steps, holds a potential occurence. *)
+    enode : node; }                                    (* associated node. *)
 
 type 'a event = Never | Emut of 'a emut
 (* The type for events.
@@ -168,9 +168,9 @@ type 'a event = Never | Emut of 'a emut
    the n will be scheduled as usual with the others. *)
 
 type 'a smut = 
-    { mutable sv : 'a option;         (* signal value (None only temporary). *)
-      mutable eq : 'a -> 'a -> bool;      (* to detect signal value changes. *)
-      mutable snode : node }                             (* associated node. *)
+  { mutable sv : 'a option;         (* signal value (None only temporary). *)
+    mutable eq : 'a -> 'a -> bool;      (* to detect signal value changes. *)
+    mutable snode : node }                             (* associated node. *)
 
 type 'a signal = Const of 'a | Smut of 'a smut
 (* The type for signals.
@@ -229,7 +229,7 @@ module H = struct
   | Some _, None -> 1                      (* None is smaller than anything. *)
   | None, Some _ -> -1                     (* None is smaller than anything. *)
   | None, None -> 0
-	  		  
+    
   let rec down h i =
     let last = size h - 1 in
     let start = 2 * i in
@@ -240,49 +240,50 @@ module H = struct
       if r > last then l else (if compare_down h l r < 0 then l else r)
     in
     if compare_down h i child > 0 then (Wa.swap h i child; down h child)
-
+                                       
   let up h i =
     let rec aux h i last_none =
       if i = 0 then (if last_none then down h 0) else
       let p = (i - 1) / 2 in                                (* parent index. *)
       match Wa.get h i, Wa.get h p with
       | Some n, Some n' -> 
-	  if compare n.rank n'.rank < 0 then (Wa.swap h i p; aux h p false) else
-	  (if last_none then down h i)
+          if compare n.rank n'.rank < 0 then (Wa.swap h i p; aux h p false) else
+          (if last_none then down h i)
       | Some _, None -> 
-	  Wa.swap h i p; aux h p true
+          Wa.swap h i p; aux h p true
       | None, _ -> () 
     in
     aux h i false
-	
+      
   let rebuild h = for i = (size h - 2) / 2 downto 0 do down h i done
   let add h n = Wa.add h n; up h (size h - 1)
   let rec take h = 
     let s = size h in
     if s = 0 then None else
     let v = Wa.get h 0 in
-    if s > 1 then 
-      (Wa.set h 0 (Wa.get h (s - 1)); Wa.rem_last h; down h 0) 
-    else
-      Wa.rem_last h;
+    begin 
+      if s > 1 
+      then (Wa.set h 0 (Wa.get h (s - 1)); Wa.rem_last h; down h 0) 
+      else Wa.rem_last h
+    end;
     match v with None -> take h | v -> v
 end
 
 let delayed_rank = max_int 
-
+  
 module Step = struct                                       (* Update steps. *)
   let nil = { over = true; heap = Wa.create 0; eops = []; cops = []}
   let create n =
     let h = Wa.create (3 * Wa.length n.deps) in 
     { over = false; heap = h; eops = []; cops = []}
-
+    
   let add c n = if n.stamp == c then () else (n.stamp <- c; H.add c.heap n)
   let add_deps c n = Wa.iter (add c) n.deps
   let add_eop c op = c.eops <- op :: c.eops
   let add_cop c op = c.cops <- op :: c.cops
   let allow_reschedule n = n.stamp <- nil
   let rebuild c = H.rebuild c.heap      
-
+      
   let rec execute c = 
     let eops c = List.iter (fun op -> op ()) c.eops; c.eops <- [] in 
     let cops c = List.iter (fun op -> op ()) c.cops; c.cops <- [] in
@@ -290,24 +291,24 @@ module Step = struct                                       (* Update steps. *)
     let rec update c = match H.take c.heap with
     | Some n when n.rank <> delayed_rank -> n.update c; update c 
     | Some n -> 
-	let c' = create n in
-	eops c; List.iter (fun n -> n.update c') (n :: H.els c.heap); cops c;
-	finish c;
-	execute c' 
+        let c' = create n in
+        eops c; List.iter (fun n -> n.update c') (n :: H.els c.heap); cops c;
+        finish c;
+        execute c' 
     | None -> eops c; cops c; finish c
     in
     update c
-
+      
   let find_unfinished nl = (* find unfinished step in recursive producers. *)
     let rec aux next = function            (* zig-zag breadth-first search. *)
-      | [] -> if next = [] then nil else aux [] next
-      | [] :: todo -> aux next todo 
-      | nl :: todo -> find next todo nl
+    | [] -> if next = [] then nil else aux [] next
+    | [] :: todo -> aux next todo 
+    | nl :: todo -> find next todo nl
     and find next todo = function
-      | [] -> aux next todo
-      | n :: nl -> 
-	  if not n.stamp.over then n.stamp else
-	  find (n.producers () :: next) todo nl
+    | [] -> aux next todo
+    | n :: nl -> 
+        if not n.stamp.over then n.stamp else
+        find (n.producers () :: next) todo nl
     in
     aux [] [ nl ]
 end
@@ -316,13 +317,13 @@ module Node = struct
   let delayed_rank = delayed_rank
   let min_rank = min_int
   let max_rank = delayed_rank - 1
-
+                 
   let nop _ = ()
   let no_producers () = []
   let create r = 
     { rank = r; stamp = Step.nil; update = nop; retain = nop;
       producers = no_producers; deps = Wa.create 0 }
-
+    
   let bind n p u = n.producers <- p; n.update <- u
   let stop n = n.producers <- no_producers; n.update <- nop; Wa.clear n.deps
   let rem_dep n n' = Wa.rem n.deps n'
@@ -334,7 +335,7 @@ module Node = struct
   let rsucc n = 
     if n.rank = delayed_rank then min_rank else
     if n.rank < max_rank then n.rank + 1 else invalid_arg err_max_rank
-
+        
   let rsucc2 n n' = 
     let r = rsucc n in 
     let r' = rsucc n' in 
@@ -346,13 +347,13 @@ module Node = struct
     loop and blow the ranks). *)
   let update_rank n r =              (* returns true iff n's rank increased. *)
     let rec aux = function
-      | []  -> ()
-      | n :: todo -> 
-	  let update todo d =
-	    if n.rank < d.rank || n.rank = delayed_rank then todo else 
-	    (d.rank <- rsucc n; d :: todo)
-	  in
-	  aux (Wa.fold update todo n.deps)
+    | []  -> ()
+    | n :: todo -> 
+        let update todo d =
+          if n.rank < d.rank || n.rank = delayed_rank then todo else 
+          (d.rank <- rsucc n; d :: todo)
+        in
+        aux (Wa.fold update todo n.deps)
     in
     if r > n.rank then (n.rank <- r; aux [ n ]; true) else false
 end
@@ -386,19 +387,19 @@ let signal ?i m p u =
   | c -> Step.add c m.snode
   end;
   Smut m
-
+    
 let supdate v m c = match m.sv with 
 | Some v' when (m.eq v v') -> ()
 | Some _ -> m.sv <- Some v; if c != Step.nil then Step.add_deps c m.snode
 | None -> m.sv <- Some v                       (* init. without init value. *)
-
+        
 module E = struct
   type 'a t = 'a event
-
+      
   let add_dep m n = 
     Node.add_dep m.enode n;
     if !(m.ev) <> None then Step.add m.enode.stamp n
-
+        
   let send m v =                                  (* starts an update step. *)
     let c = Step.create m.enode in
     m.enode.stamp <- c;
@@ -415,7 +416,7 @@ module E = struct
   let retain e c = match e with 
   | Never -> invalid_arg err_retain_never 
   | Emut m -> let c' = m.enode.retain in (m.enode.retain <- c); (`R c')
-
+                                                                
   let stop = function Never -> () | Emut m -> Node.stop m.enode
   let equal e e' = match e, e' with
   | Never, Never -> true
@@ -428,77 +429,78 @@ module E = struct
       begin match e with 
       | Never -> e 
       | Emut m ->
-	  let m' = emut (rsucc m.enode) in
-	  let rec p () = [ m.enode ] 
-	  and u c = let v = eval m in t v; eupdate v m' c in
-	  add_dep m m'.enode;
-	  event m' p u 
+          let m' = emut (rsucc m.enode) in
+          let rec p () = [ m.enode ] 
+          and u c = let v = eval m in t v; eupdate v m' c in
+          add_dep m m'.enode;
+          event m' p u 
       end
   | Smut mc ->
       match e with
       | Never -> Never
       | Emut m ->
-	  let m' = emut (rsucc2 mc.snode m.enode) in
-	  let rec p () = [mc.snode; m.enode] 
-	  and u c = match !(m.ev) with
-	  | None -> ()                                        (* mc updated. *)
-	  | Some v -> if (sval mc) then t v; eupdate v m' c
-	  in
-	  Node.add_dep mc.snode m'.enode;
-	  add_dep m m'.enode;
-	  event m' p u
-
+          let m' = emut (rsucc2 mc.snode m.enode) in
+          let rec p () = [mc.snode; m.enode] 
+          and u c = match !(m.ev) with
+          | None -> ()                                        (* mc updated. *)
+          | Some v -> if (sval mc) then t v; eupdate v m' c
+          in
+          Node.add_dep mc.snode m'.enode;
+          add_dep m m'.enode;
+          event m' p u
+            
   (* Transforming and filtering *)
-
+            
   let once = function
-    | Never -> Never 
-    | Emut m -> 
-	let m' = emut (rsucc m.enode) in
-	let rec p () = [ m.enode ]
-	and u c = 
-	  Node.rem_dep m.enode m'.enode; 
-	  eupdate (eval m) m' c; 
-	  Node.stop m'.enode
-	in
-	add_dep m m'.enode;
-	event m' p u
-
+  | Never -> Never 
+  | Emut m -> 
+      let m' = emut (rsucc m.enode) in
+      let rec p () = [ m.enode ]
+      and u c = 
+        Node.rem_dep m.enode m'.enode; 
+        eupdate (eval m) m' c; 
+        Node.stop m'.enode
+      in
+      add_dep m m'.enode;
+      event m' p u
+        
   let drop_once = function
-    | Never -> Never
-    | Emut m ->
-	let m' = emut (rsucc m.enode) in 
-	let rec p () = [ m.enode ]
-	and u c =                                           (* first update. *)
-	  let u' c = eupdate (eval m) m' c in         (* subsequent updates. *)
-	  Node.bind m'.enode p u'
-	in         
-	add_dep m m'.enode;
-	event m' p u
-
+  | Never -> Never
+  | Emut m ->
+      let m' = emut (rsucc m.enode) in 
+      let rec p () = [ m.enode ]
+      and u c =                                           (* first update. *)
+        let u' c = eupdate (eval m) m' c in         (* subsequent updates. *)
+        Node.bind m'.enode p u'
+      in         
+      add_dep m m'.enode;
+      event m' p u
+        
   let app ef = function
-    | Never -> Never 
-    | Emut m -> match ef with
+  | Never -> Never 
+  | Emut m -> 
+      match ef with
       | Never -> Never 
       | Emut mf ->
-	  let m' = emut (rsucc2 m.enode mf.enode) in 
-	  let rec p () = [ m.enode; mf.enode ]
-	  and u c = match !(mf.ev), !(m.ev) with
-	  | None, _ | _, None -> ()
-	  | Some f, Some v -> eupdate (f v) m' c 
-	  in 
-	  add_dep m m'.enode;
-	  add_dep mf m'.enode;
-	  event m' p u
-
+          let m' = emut (rsucc2 m.enode mf.enode) in 
+          let rec p () = [ m.enode; mf.enode ]
+          and u c = match !(mf.ev), !(m.ev) with
+          | None, _ | _, None -> ()
+          | Some f, Some v -> eupdate (f v) m' c 
+          in 
+          add_dep m m'.enode;
+          add_dep mf m'.enode;
+          event m' p u
+            
   let map f = function
-    | Never -> Never
-    | Emut m -> 
-	let m' = emut (rsucc m.enode) in
-	let rec p () = [ m.enode ]
-	and u c = eupdate (f (eval m)) m' c in
-	add_dep m m'.enode;
-	event m' p u
-	  
+  | Never -> Never
+  | Emut m -> 
+      let m' = emut (rsucc m.enode) in
+      let rec p () = [ m.enode ]
+      and u c = eupdate (f (eval m)) m' c in
+      add_dep m m'.enode;
+      event m' p u
+        
   let stamp e v = match e with
   | Never -> Never 
   | Emut m -> 
@@ -507,108 +509,108 @@ module E = struct
       and u c = eupdate v m' c in 
       add_dep m m'.enode;
       event m' p u
-	
+        
   let filter pred = function
-    | Never -> Never 
-    | Emut m -> 
-	let m' = emut (rsucc m.enode) in 
-	let rec p () = [ m.enode ]
-	and u c = let v = eval m in if pred v then eupdate v m' c else () in
-	add_dep m m'.enode;
-	event m' p u
-
+  | Never -> Never 
+  | Emut m -> 
+      let m' = emut (rsucc m.enode) in 
+      let rec p () = [ m.enode ]
+      and u c = let v = eval m in if pred v then eupdate v m' c else () in
+      add_dep m m'.enode;
+      event m' p u
+        
   let fmap fm = function
-    | Never -> Never 
-    | Emut m -> 
-	let m' = emut (rsucc m.enode) in
-	let rec p () = [ m.enode ] 
-	and u c = match fm (eval m) with Some v -> eupdate v m' c | None -> () 
-	in
-	add_dep m m'.enode;
-	event m' p u
-
+  | Never -> Never 
+  | Emut m -> 
+      let m' = emut (rsucc m.enode) in
+      let rec p () = [ m.enode ] 
+      and u c = match fm (eval m) with Some v -> eupdate v m' c | None -> () 
+      in
+      add_dep m m'.enode;
+      event m' p u
+        
   let diff d = function
-    | Never -> Never
-    | Emut m ->
-	let m' = emut (rsucc m.enode) in
-	let last = ref None in
-	let rec p () = [ m.enode ]
-	and u c = 
-	  let v = eval m in
-	  match !last with
-	  | None -> last := Some v
-	  | Some v' -> last := Some v; eupdate (d v v') m' c
-	in
-	add_dep m m'.enode;
-	event m' p u
-
+  | Never -> Never
+  | Emut m ->
+      let m' = emut (rsucc m.enode) in
+      let last = ref None in
+      let rec p () = [ m.enode ]
+      and u c = 
+        let v = eval m in
+        match !last with
+        | None -> last := Some v
+        | Some v' -> last := Some v; eupdate (d v v') m' c
+      in
+      add_dep m m'.enode;
+      event m' p u
+        
   let changes ?(eq = ( = )) = function
-    | Never -> Never
-    | Emut m -> 
-	let m' = emut (rsucc m.enode) in
-	let last = ref None in
-	let rec p () = [ m.enode ]
-	and u c =
-	  let v = eval m in
-	  match !last with 
-	  | None -> last := Some v; eupdate v m' c 
-	  | Some v' -> last := Some v; if eq v v' then () else eupdate v m' c
-	in
-	add_dep m m'.enode;
-	event m' p u
-	  
+  | Never -> Never
+  | Emut m -> 
+      let m' = emut (rsucc m.enode) in
+      let last = ref None in
+      let rec p () = [ m.enode ]
+      and u c =
+        let v = eval m in
+        match !last with 
+        | None -> last := Some v; eupdate v m' c 
+        | Some v' -> last := Some v; if eq v v' then () else eupdate v m' c
+      in
+      add_dep m m'.enode;
+      event m' p u
+        
   let when_ c = function
-    | Never -> Never
-    | Emut m as e -> 
-	match c with
-	| Const true -> e
-	| Const false -> Never
-	| Smut mc ->
-	    let m' = emut (rsucc2 m.enode mc.snode) in
-	    let rec p () = [ m.enode; mc.snode ] 
-	    and u c = match !(m.ev) with
-	    | None -> ()                                     (* mc updated. *)
-	    | Some _ -> if (sval mc) then eupdate (eval m) m' c else () 
-	    in
-	    add_dep m m'.enode;
-	    Node.add_dep mc.snode m'.enode;
-	    event m' p u 
-
-   let dismiss c = function
-     | Never -> Never
-     | Emut m as e -> 
-	 match c with
-	 | Never -> e
-	 | Emut mc ->
-	     let m' = emut (rsucc2 mc.enode m.enode) in
-	     let rec p () = [ mc.enode; m.enode ]
-	     and u c = match !(mc.ev) with
-	     | Some _ -> () 
-	     | None -> eupdate (eval m) m' c 
-	     in
-	     add_dep mc m'.enode;
-	     add_dep m m'.enode;
-	     event m' p u
-
+  | Never -> Never
+  | Emut m as e -> 
+      match c with
+      | Const true -> e
+      | Const false -> Never
+      | Smut mc ->
+          let m' = emut (rsucc2 m.enode mc.snode) in
+          let rec p () = [ m.enode; mc.snode ] 
+          and u c = match !(m.ev) with
+          | None -> ()                                     (* mc updated. *)
+          | Some _ -> if (sval mc) then eupdate (eval m) m' c else () 
+          in
+          add_dep m m'.enode;
+          Node.add_dep mc.snode m'.enode;
+          event m' p u 
+            
+  let dismiss c = function
+  | Never -> Never
+  | Emut m as e -> 
+      match c with
+      | Never -> e
+      | Emut mc ->
+          let m' = emut (rsucc2 mc.enode m.enode) in
+          let rec p () = [ mc.enode; m.enode ]
+          and u c = match !(mc.ev) with
+          | Some _ -> () 
+          | None -> eupdate (eval m) m' c 
+          in
+          add_dep mc m'.enode;
+          add_dep m m'.enode;
+          event m' p u
+            
   let until c = function
-    | Never -> Never
-    | Emut m as e -> 
-	match c with 
-	| Never -> e 
-	| Emut mc ->
-	    let m' = emut (rsucc2 m.enode mc.enode) in 
-	    let rec p () = [ m.enode; mc.enode] in 
-	    let u c = match !(mc.ev) with
-	    | None -> eupdate (eval m) m' c
-	    | Some _ -> 
-		Node.rem_dep m.enode m'.enode;
-		Node.rem_dep mc.enode m'.enode;
-		Node.stop m'.enode
-	    in
-	    add_dep m m'.enode;
-	    add_dep mc m'.enode;
-	    event m' p u
-	      
+  | Never -> Never
+  | Emut m as e -> 
+      match c with 
+      | Never -> e 
+      | Emut mc ->
+          let m' = emut (rsucc2 m.enode mc.enode) in 
+          let rec p () = [ m.enode; mc.enode] in 
+          let u c = match !(mc.ev) with
+          | None -> eupdate (eval m) m' c
+          | Some _ -> 
+              Node.rem_dep m.enode m'.enode;
+              Node.rem_dep mc.enode m'.enode;
+              Node.stop m'.enode
+          in
+          add_dep m m'.enode;
+          add_dep mc m'.enode;
+          event m' p u
+            
   (* Accumulating *)
 
   let accum ef i = match ef with
@@ -620,25 +622,25 @@ module E = struct
       and u c = acc := (eval m) !acc; eupdate !acc m' c in
       add_dep m m'.enode;
       event m' p u
-	
+        
   let fold f i = function 
-    | Never -> Never
-    | Emut m ->
-	let m' = emut (rsucc m.enode) in 
-	let acc = ref i in
-	let rec p () = [ m.enode ] 
-	and u c = acc := f !acc (eval m); eupdate !acc m' c in 
-	add_dep m m'.enode;
-	event m' p u
-	  
+  | Never -> Never
+  | Emut m ->
+      let m' = emut (rsucc m.enode) in 
+      let acc = ref i in
+      let rec p () = [ m.enode ] 
+      and u c = acc := f !acc (eval m); eupdate !acc m' c in 
+      add_dep m m'.enode;
+      event m' p u
+          
   (* Combining *)
-	  
+    
   let occurs m = !(m.ev) <> None
   let find_muts_and_next_rank el = 
     let rec aux acc max = function
-      | [] -> List.rev acc, rsucc max
-      | (Emut m) :: l -> aux (m :: acc) (rmax max m.enode) l 
-      | Never :: l -> aux acc max l 
+    | [] -> List.rev acc, rsucc max
+    | (Emut m) :: l -> aux (m :: acc) (rmax max m.enode) l 
+    | Never :: l -> aux acc max l 
     in
     aux [] Node.rmin el 
       
@@ -654,9 +656,9 @@ module E = struct
       
   let merge f a el =
     let rec fold f acc = function
-      | m :: l when occurs m -> fold f (f acc (eval m)) l
-      | m :: l -> fold f acc l
-      | [] -> acc
+    | m :: l when occurs m -> fold f (f acc (eval m)) l
+    | m :: l -> fold f acc l
+    | [] -> acc
     in
     let emuts, r = find_muts_and_next_rank el in 
     let m' = emut r in
@@ -666,66 +668,66 @@ module E = struct
     event m' p u
       
   let switch e = function
-    | Never -> e
-    | Emut ms ->
-	let r = match e with
-	| Emut m -> rsucc2 m.enode ms.enode | Never -> rsucc ms.enode
-	in 
-	let m' = emut r in 
-	let src = ref e in                          (* current event source. *)
-	let rec p () = match !src with
-	| Emut m -> [ m.enode; ms.enode ] | Never -> [ ms.enode ] 
-	and u c = match !(ms.ev) with
-	| None -> (match !src with                       (* only src occurs. *)
-	  | Emut m -> eupdate (eval m) m' c | Never -> assert false)
-	| Some e ->
-	    begin match !src with 
-	    | Emut m -> Node.rem_dep m.enode m'.enode | Never -> ()
-	    end;
-	    src := e;
-	    match e with
-	    | Never -> ignore (Node.update_rank m'.enode (rsucc ms.enode))
-	    | Emut m -> 
-		Node.add_dep m.enode m'.enode;
-		if Node.update_rank m'.enode (rsucc2 m.enode ms.enode) then 
-		  begin 
-		    (* Rank increased because of m. Thus m may stil
-		       update and we may be rescheduled. If it happens
-		       we'll be in the other branch without any harm
-		       but some redundant computation. *)
-		    Step.allow_reschedule m'.enode;
-		    Step.rebuild c;
-		  end
-		else
-		  (* No rank increase, m already updated if needed. *)
-		  (match !(m.ev) with Some v -> eupdate v m' c | None -> ())
-	in
-	(match e with Emut m -> add_dep m m'.enode | Never -> ());
-        add_dep ms m'.enode;
-	event m' p u
-
+  | Never -> e
+  | Emut ms ->
+      let r = match e with
+      | Emut m -> rsucc2 m.enode ms.enode | Never -> rsucc ms.enode
+      in 
+      let m' = emut r in 
+      let src = ref e in                          (* current event source. *)
+      let rec p () = match !src with
+      | Emut m -> [ m.enode; ms.enode ] | Never -> [ ms.enode ] 
+      and u c = match !(ms.ev) with
+      | None -> (match !src with                       (* only src occurs. *)
+        | Emut m -> eupdate (eval m) m' c | Never -> assert false)
+      | Some e ->
+          begin match !src with 
+          | Emut m -> Node.rem_dep m.enode m'.enode | Never -> ()
+          end;
+          src := e;
+          match e with
+          | Never -> ignore (Node.update_rank m'.enode (rsucc ms.enode))
+          | Emut m -> 
+              Node.add_dep m.enode m'.enode;
+              if Node.update_rank m'.enode (rsucc2 m.enode ms.enode) then 
+                begin 
+                  (* Rank increased because of m. Thus m may stil
+                     update and we may be rescheduled. If it happens
+                     we'll be in the other branch without any harm
+                     but some redundant computation. *)
+                  Step.allow_reschedule m'.enode;
+                  Step.rebuild c;
+                end
+              else
+              (* No rank increase, m already updated if needed. *)
+              (match !(m.ev) with Some v -> eupdate v m' c | None -> ())
+      in
+      (match e with Emut m -> add_dep m m'.enode | Never -> ());
+      add_dep ms m'.enode;
+      event m' p u
+        
   let fix f = 
     let m = emut Node.delayed_rank in
     let e = event m (fun () -> []) (fun _ -> assert false) in
     match f e with
     | Never, r -> r
     | Emut m', r -> 
-	if m'.enode.rank = Node.delayed_rank then invalid_arg err_fix;
-	let rec p () = [ (* avoid cyclic dep. *) ]                  
-	and u c =                               (* N.B. c is the next step. *)
-	  let clear v () = v := None in 
-	  m.ev := Some (eval m');
+        if m'.enode.rank = Node.delayed_rank then invalid_arg err_fix;
+        let rec p () = [ (* avoid cyclic dep. *) ]                  
+        and u c =                               (* N.B. c is the next step. *)
+          let clear v () = v := None in 
+          m.ev := Some (eval m');
           Step.add_eop c (clear m.ev);   (* vs. add_cop for regular events. *)
           Step.add_deps c m.enode
-	in
-	Node.bind m.enode p u;
-	add_dep m' m.enode;
-	r
+        in
+        Node.bind m.enode p u;
+        add_dep m' m.enode;
+        r
 end
-    
+
 module S = struct
   type 'a t = 'a signal
-	
+      
   let set_sval v m c = m.sv <- Some v; Step.add_deps c m.snode
   let set m v =                                   (* starts an update step. *)
     if m.eq (sval m) v then () else
@@ -734,93 +736,93 @@ module S = struct
     m.sv <- Some v; 
     Step.add_deps c m.snode;
     Step.execute c
-
+      
   (* Basics *)
-
+      
   let const v = Const v
   let create ?(eq = ( = )) v = 
     let m = smut Node.min_rank eq in
     m.sv <- Some v;
     Smut m, set m
-
+      
   let retain s c = match s with 
   | Const _ -> invalid_arg err_retain_cst_sig
   | Smut m -> let c' = m.snode.retain in m.snode.retain <- c; (`R c')
-
+                                                              
   let eq_fun = function Const _ -> None | Smut m -> Some m.eq
 
   let value = function 
-    | Const v | Smut { sv = Some v }  -> v
-    | Smut { sv = None } -> failwith err_sig_undef
-	  
+  | Const v | Smut { sv = Some v }  -> v
+  | Smut { sv = None } -> failwith err_sig_undef
+                            
   let stop = function Const _ -> () | Smut m -> Node.stop m.snode
   let equal ?(eq = ( = )) s s' = match s, s' with
   | Const v, Const v' -> eq v v'
   | Const _, _ | _, Const _ -> false
   | Smut m, Smut m' -> m == m'
-	
+                       
   let trace ?(iff = const true) t s = match iff with
   | Const false -> s
   | Const true -> 
       begin match s with 
       | Const v -> t v; s
       | Smut m -> 
-	  let m' = smut (rsucc m.snode) m.eq in 
-	  let rec p () = [ m.snode ] in
-	  let u c = let v = sval m in t v; supdate v m' c in
-	  Node.add_dep m.snode m'.snode;
-	  signal m' p u
+          let m' = smut (rsucc m.snode) m.eq in 
+          let rec p () = [ m.snode ] in
+          let u c = let v = sval m in t v; supdate v m' c in
+          Node.add_dep m.snode m'.snode;
+          signal m' p u
       end
   | Smut mc -> 
       match s with 
       | Const v -> 
-	  let m' = smut (rsucc mc.snode) ( = ) (* we don't care about eq *) in 
-	  let rec p () = [ mc.snode ]
-	  and u c = 
-	    if (sval mc) then t v; 
-	    Node.rem_dep mc.snode m'.snode; 
-	    Node.stop m'.snode;
-	  in
-	  Node.add_dep mc.snode m'.snode;
-	  signal ~i:v m' p u
+          let m' = smut (rsucc mc.snode) ( = ) (* we don't care about eq *) in 
+          let rec p () = [ mc.snode ]
+          and u c = 
+            if (sval mc) then t v; 
+            Node.rem_dep mc.snode m'.snode; 
+            Node.stop m'.snode;
+          in
+          Node.add_dep mc.snode m'.snode;
+          signal ~i:v m' p u
       | Smut m ->
-	  let m' = smut (rsucc2 mc.snode m.snode) m.eq in
-	  let rec p () = [ mc.snode; m.snode ]
-	  and u c = 
-	    let v = sval m in
-	    match m'.sv with 
-	    | Some v' when m'.eq v v' -> ()                   (* mc updated. *)
-	    | _ -> if (sval mc) then t v; supdate v m' c    (* init or diff. *)
-	  in
-	  Node.add_dep mc.snode m'.snode;
-	  Node.add_dep m.snode m'.snode;
-	  signal m' p u
-
+          let m' = smut (rsucc2 mc.snode m.snode) m.eq in
+          let rec p () = [ mc.snode; m.snode ]
+          and u c = 
+            let v = sval m in
+            match m'.sv with 
+            | Some v' when m'.eq v v' -> ()                   (* mc updated. *)
+            | _ -> if (sval mc) then t v; supdate v m' c    (* init or diff. *)
+          in
+          Node.add_dep mc.snode m'.snode;
+          Node.add_dep m.snode m'.snode;
+          signal m' p u
+            
   (* From events *)
-
+            
   let hold ?(eq = ( = )) i = function
-    | Never -> Const i
-    | Emut m ->
-	let m' = smut (rsucc m.enode) eq in
-	let rec p () = [ m.enode ] 
-	and u c = match !(m.ev) with
-	| None -> ()                                          (* init. only. *)
-	| Some v -> supdate v m' c 
-	in
-	E.add_dep m m'.snode;
-	signal ~i m' p u
-	    
+  | Never -> Const i
+  | Emut m ->
+      let m' = smut (rsucc m.enode) eq in
+      let rec p () = [ m.enode ] 
+      and u c = match !(m.ev) with
+      | None -> ()                                          (* init. only. *)
+      | Some v -> supdate v m' c 
+      in
+      E.add_dep m m'.snode;
+      signal ~i m' p u
+        
   (* Filtering and transforming *)
-
+        
   let map ?(eq = ( = )) f = function
-    | Const v -> Const (f v)
-    | Smut m -> 
-	let m' = smut (rsucc m.snode) eq  in
-	let rec p () = [ m.snode ] 
-	and u c = supdate (f (sval m)) m' c in
-	Node.add_dep m.snode m'.snode;
-	signal m' p u
-	    	  
+  | Const v -> Const (f v)
+  | Smut m -> 
+      let m' = smut (rsucc m.snode) eq  in
+      let rec p () = [ m.snode ] 
+      and u c = supdate (f (sval m)) m' c in
+      Node.add_dep m.snode m'.snode;
+      signal m' p u
+        
   let app ?(eq = ( = )) sf sv = match sf, sv with
   | Smut mf, Smut mv -> 
       let m' = smut (rsucc2 mf.snode mv.snode) eq in 
@@ -839,130 +841,130 @@ module S = struct
       signal m' p u
 
   let filter ?(eq = ( = )) pred i = function
-    | Const v as s -> if pred v then s else Const i 
-    | Smut m ->
-	let m' = smut (rsucc m.snode) eq in 
-	let rec p () = [ m.snode ] 
-	and u c = let v = sval m in if pred v then supdate v m' c else () in
-	Node.add_dep m.snode m'.snode;
-	signal ~i m' p u
-	
+  | Const v as s -> if pred v then s else Const i 
+  | Smut m ->
+      let m' = smut (rsucc m.snode) eq in 
+      let rec p () = [ m.snode ] 
+      and u c = let v = sval m in if pred v then supdate v m' c else () in
+      Node.add_dep m.snode m'.snode;
+      signal ~i m' p u
+        
   let fmap ?(eq = ( = )) fm i = function
-    | Const v -> (match fm v with Some v' -> Const v' | None -> Const i)
-    | Smut m ->
-	let m' = smut (rsucc m.snode) eq in 
-	let rec p () = [ m.snode ] 
-	and u c = match fm (sval m) with Some v -> supdate v m' c | None -> () 
-	in
-	Node.add_dep m.snode m'.snode;
-	signal ~i m' p u
-	  
+  | Const v -> (match fm v with Some v' -> Const v' | None -> Const i)
+  | Smut m ->
+      let m' = smut (rsucc m.snode) eq in 
+      let rec p () = [ m.snode ] 
+      and u c = match fm (sval m) with Some v -> supdate v m' c | None -> () 
+      in
+      Node.add_dep m.snode m'.snode;
+      signal ~i m' p u
+        
   let diff d = function
-    | Const _ -> Never
-    | Smut m ->
-	let m' = emut (rsucc m.snode) in 
-	let last = ref None in
-	let rec p () = [ m.snode ] 
-	and u c = 
-	  let v = sval m in 
-	  match !last with 
-	  | Some v' -> last := Some v; eupdate (d v v') m' c
-	  | None -> assert false
-	in
-	begin match Step.find_unfinished (m.snode.producers ()) with
-	| c when c == Step.nil -> 
-	    Node.add_dep m.snode m'.enode; last := Some (sval m)
-	| c -> (* In a step, m' cannot occur in that step (cf. semantics).
-		  Dep. added at the end of step to avoid being scheduled. *)
-	    let setup () =
-	      if m.snode.update == Node.nop then 
-		() (* m stopped in step *) 
-	      else
-		(Node.add_dep m.snode m'.enode; last := Some (sval m))
-	    in 
-	    Step.add_eop c setup 
-	end;
-	event m' p u
-
+  | Const _ -> Never
+  | Smut m ->
+      let m' = emut (rsucc m.snode) in 
+      let last = ref None in
+      let rec p () = [ m.snode ] 
+      and u c = 
+        let v = sval m in 
+        match !last with 
+        | Some v' -> last := Some v; eupdate (d v v') m' c
+        | None -> assert false
+      in
+      begin match Step.find_unfinished (m.snode.producers ()) with
+      | c when c == Step.nil -> 
+          Node.add_dep m.snode m'.enode; last := Some (sval m)
+      | c -> (* In a step, m' cannot occur in that step (cf. semantics).
+                Dep. added at the end of step to avoid being scheduled. *)
+          let setup () =
+            if m.snode.update == Node.nop then 
+              () (* m stopped in step *) 
+            else
+            (Node.add_dep m.snode m'.enode; last := Some (sval m))
+          in 
+          Step.add_eop c setup 
+      end;
+      event m' p u
+        
   let changes = function
-    | Const _ -> Never
-    | Smut m ->
-	let m' = emut (rsucc m.snode) in
-	let rec p () = [ m.snode ]
-	and u c = eupdate (sval m) m' c in
-	begin match Step.find_unfinished (m.snode.producers ()) with
-	| c when c == Step.nil -> Node.add_dep m.snode m'.enode 
-	| c -> (* In a step, m' cannot occur in that step (cf. semantics).
+  | Const _ -> Never
+  | Smut m ->
+      let m' = emut (rsucc m.snode) in
+      let rec p () = [ m.snode ]
+      and u c = eupdate (sval m) m' c in
+      begin match Step.find_unfinished (m.snode.producers ()) with
+      | c when c == Step.nil -> Node.add_dep m.snode m'.enode 
+      | c -> (* In a step, m' cannot occur in that step (cf. semantics).
                   Dep. added at the end of step to avoid being scheduled. *)
-	    let setup () = 
-	      if m.snode.update == Node.nop then 
-		() (* m stopped in step *) 
-	      else
-		(Node.add_dep m.snode m'.enode)
-	    in
-	    Step.add_eop c setup
-	end;
-	event m' p u
-
+          let setup () = 
+            if m.snode.update == Node.nop then 
+              () (* m stopped in step *) 
+            else
+            (Node.add_dep m.snode m'.enode)
+          in
+          Step.add_eop c setup
+      end;
+      event m' p u
+        
   let sample f e = function
-    | Const v -> E.map (fun ev -> f ev v) e 
-    | Smut ms -> 
-	match e with
-	| Never -> Never
-	| Emut me -> 
-	    let m' = emut (rsucc2 me.enode ms.snode) in
-	    let rec p () = [ me.enode; ms.snode ]
-	    and u c = match !(me.ev) with 
-	    | None -> () (* ms updated *) 
-	    | Some v -> eupdate (f v (sval ms)) m' c 
-	    in 
-	    E.add_dep me m'.enode; 
-	    Node.add_dep ms.snode m'.enode;
-	    event m' p u
-
+  | Const v -> E.map (fun ev -> f ev v) e 
+  | Smut ms -> 
+      match e with
+      | Never -> Never
+      | Emut me -> 
+          let m' = emut (rsucc2 me.enode ms.snode) in
+          let rec p () = [ me.enode; ms.snode ]
+          and u c = match !(me.ev) with 
+          | None -> () (* ms updated *) 
+          | Some v -> eupdate (f v (sval ms)) m' c 
+          in 
+          E.add_dep me m'.enode; 
+          Node.add_dep ms.snode m'.enode;
+          event m' p u
+            
   let when_ ?(eq = ( = )) c i s = match c with
   | Const true -> s
   | Const false -> Const i 
   | Smut mc -> 
       match s with
       | Const v ->
-	  let m' = smut (rsucc mc.snode) eq in
-	  let rec p () = [ mc.snode ] 
-	  and u c = if (sval mc) then supdate v m' c else () in
-	  Node.add_dep mc.snode m'.snode;
-	  signal ~i m' p u
+          let m' = smut (rsucc mc.snode) eq in
+          let rec p () = [ mc.snode ] 
+          and u c = if (sval mc) then supdate v m' c else () in
+          Node.add_dep mc.snode m'.snode;
+          signal ~i m' p u
       | Smut ms -> 
-	  let m' = smut (rsucc2 mc.snode ms.snode) eq in 
-	  let rec p () = [ mc.snode; ms.snode ] 
-	  and u c = if (sval mc) then supdate (sval ms) m' c else () in 
-	  Node.add_dep mc.snode m'.snode;
-	  Node.add_dep ms.snode m'.snode;
-	  signal ~i m' p u
-
+          let m' = smut (rsucc2 mc.snode ms.snode) eq in 
+          let rec p () = [ mc.snode; ms.snode ] 
+          and u c = if (sval mc) then supdate (sval ms) m' c else () in 
+          Node.add_dep mc.snode m'.snode;
+          Node.add_dep ms.snode m'.snode;
+          signal ~i m' p u
+            
   let dismiss ?(eq = ( = )) c i s = match c with 
   | Never -> s
   | Emut mc -> 
       match s with
       | Const v -> 
-	  let m' = smut (rsucc mc.enode) eq in 
-	  let rec p () = [ mc.enode ] 
-	  and u c = match !(mc.ev) with 
-	  | Some _ -> () | None -> supdate  v m' c 
-	  in
-	  Node.add_dep mc.enode m'.snode;
-	  signal ~i m' p u
+          let m' = smut (rsucc mc.enode) eq in 
+          let rec p () = [ mc.enode ] 
+          and u c = match !(mc.ev) with 
+          | Some _ -> () | None -> supdate  v m' c 
+          in
+          Node.add_dep mc.enode m'.snode;
+          signal ~i m' p u
       | Smut ms ->
-	  let m' = smut (rsucc2 mc.enode ms.snode) eq in 
-	  let rec p () = [ mc.enode; ms.snode ] 
-	  and u c = match !(mc.ev) with 
-	  | Some _ -> () | None -> supdate (sval ms) m' c
-	  in
-	  Node.add_dep mc.enode m'.snode;
-	  Node.add_dep ms.snode m'.snode;
-	  signal ~i m' p u
-	    
+          let m' = smut (rsucc2 mc.enode ms.snode) eq in 
+          let rec p () = [ mc.enode; ms.snode ] 
+          and u c = match !(mc.ev) with 
+          | Some _ -> () | None -> supdate (sval ms) m' c
+          in
+          Node.add_dep mc.enode m'.snode;
+          Node.add_dep ms.snode m'.snode;
+          signal ~i m' p u
+            
   (* Accumulating *)
-
+            
   let accum ?(eq = ( = )) ef i = match ef with
   | Never -> Const i
   | Emut m -> 
@@ -976,18 +978,18 @@ module S = struct
       signal ~i m' p u
 
   let fold ?(eq = ( = )) f i = function 
-    | Never -> Const i
-    | Emut m ->
-	let m' = smut (rsucc m.enode) eq in 
-	let rec p () = [ m.enode ]
-	and u c = match !(m.ev) with
-	| None -> ()                                           (* init only. *)
-	| Some v -> supdate (f (sval m') v) m' c in
-	E.add_dep m m'.snode;
-	signal ~i m' p u
-
+  | Never -> Const i
+  | Emut m ->
+      let m' = smut (rsucc m.enode) eq in 
+      let rec p () = [ m.enode ]
+      and u c = match !(m.ev) with
+      | None -> ()                                           (* init only. *)
+      | Some v -> supdate (f (sval m') v) m' c in
+      E.add_dep m m'.snode;
+      signal ~i m' p u
+        
   (* Combining *)
-
+        
   let merge ?(eq = ( = )) f a sl =
     let rmax' acc = function Const _ -> acc | Smut m -> rmax acc m.snode in
     let nodes acc = function Const _ -> acc | Smut m -> m.snode :: acc in
@@ -998,79 +1000,81 @@ module S = struct
     let dep = function Const _ -> ()| Smut m -> Node.add_dep m.snode m'.snode in
     List.iter dep sl;
     signal m' p u
-	 
+      
   let switch ?(eq = ( = )) s = function
-    | Never -> s
-    | Emut ms -> 
-	let r = match s with 
-	| Smut m -> rsucc2 ms.enode m.snode | Const v -> rsucc ms.enode 
-	in
-	let m' = smut r eq in 
-	let src = ref s in                         (* current signal source. *)
-	let rec p () = match !src with
-	| Smut m -> [ m.snode; ms.enode] | Const _ -> [ ms.enode ]
-	and u c = match !(ms.ev) with
-	| None -> (match !src with                          (* src supdated. *)
-	  | Smut m -> supdate (sval m) m' c | Const _ -> () (* init only. *))
-	| Some s -> 
-	    begin match !src with 
-	    | Smut m -> Node.rem_dep m.snode m'.snode | Const _ -> ()
-	    end;
-	    src := s;
-	    match s with 
-	    | Const v -> 
-		ignore (Node.update_rank m'.snode (rsucc ms.enode));
-		supdate v m' c
-	    | Smut m ->
-		Node.add_dep m.snode m'.snode;
-		if Node.update_rank m'.snode (rsucc2 m.snode ms.enode) then
-		  begin 
-		    (* Rank increased because of m. Thus m may still
-		       update and we need to reschedule. Next time we 
-		       will be in the other branch. *)
-		    Step.allow_reschedule m'.snode;
-		    Step.rebuild c;
-		    Step.add c m'.snode
-		  end
-		else
-		  (* No rank increase. m already updated if needed. 
-		     No need to reschedule and rebuild the queue. *)
-		  supdate (sval m) m' c
-	in
-	E.add_dep ms m'.snode;
-	match s with 
-	| Const i -> signal ~i m' p u
-	| Smut m -> Node.add_dep m.snode m'.snode; signal m' p u
-
+  | Never -> s
+  | Emut ms -> 
+      let r = match s with 
+      | Smut m -> rsucc2 ms.enode m.snode | Const v -> rsucc ms.enode 
+      in
+      let m' = smut r eq in 
+      let src = ref s in                         (* current signal source. *)
+      let rec p () = match !src with
+      | Smut m -> [ m.snode; ms.enode] | Const _ -> [ ms.enode ]
+      and u c = match !(ms.ev) with
+      | None -> 
+          begin match !src with                          (* src supdated. *)
+          | Smut m -> supdate (sval m) m' c | Const _ -> () (* init only. *)
+          end
+      | Some s -> 
+          begin match !src with 
+          | Smut m -> Node.rem_dep m.snode m'.snode | Const _ -> ()
+          end;
+          src := s;
+          match s with 
+          | Const v -> 
+              ignore (Node.update_rank m'.snode (rsucc ms.enode));
+              supdate v m' c
+          | Smut m ->
+              Node.add_dep m.snode m'.snode;
+              if Node.update_rank m'.snode (rsucc2 m.snode ms.enode) then
+                begin 
+                  (* Rank increased because of m. Thus m may still
+                     update and we need to reschedule. Next time we 
+                     will be in the other branch. *)
+                  Step.allow_reschedule m'.snode;
+                  Step.rebuild c;
+                  Step.add c m'.snode
+                end
+              else
+              (* No rank increase. m already updated if needed. 
+                 No need to reschedule and rebuild the queue. *)
+              supdate (sval m) m' c
+      in
+      E.add_dep ms m'.snode;
+      match s with 
+      | Const i -> signal ~i m' p u
+      | Smut m -> Node.add_dep m.snode m'.snode; signal m' p u
+            
   let fix ?(eq = ( = )) i f = 
     let update_delayed n p u nl = 
       Node.bind n p u;
       match Step.find_unfinished nl with
       | c when c == Step.nil -> 
-	  (* no pertinent occuring step, create a step for update. *)
-	  let c = Step.create n in 
-	  n.update c;
-	  Step.execute c
+          (* no pertinent occuring step, create a step for update. *)
+          let c = Step.create n in 
+          n.update c;
+          Step.execute c
       | c -> Step.add c n
     in
     let m = smut Node.delayed_rank eq in
     let s = signal ~i m (fun () -> []) (fun _ -> ()) in
     match f s with
     | Const v, r -> 
-	let rec p () = []
-	and u c = supdate v m c in 
-	update_delayed m.snode p u (Node.deps m.snode);
-	r
+        let rec p () = []
+        and u c = supdate v m c in 
+        update_delayed m.snode p u (Node.deps m.snode);
+        r
     | Smut m', r -> 
-	if m'.snode.rank = Node.delayed_rank then invalid_arg err_fix;
-	let rec p () = [ (* avoid cyclic dep. *) ]
-	and u c = supdate (sval m') m c in    (* N.B. c is the next step. *)
-	Node.add_dep m'.snode m.snode;
-	update_delayed m.snode p u (m'.snode :: Node.deps m.snode);
-	r
-
+        if m'.snode.rank = Node.delayed_rank then invalid_arg err_fix;
+        let rec p () = [ (* avoid cyclic dep. *) ]
+        and u c = supdate (sval m') m c in    (* N.B. c is the next step. *)
+        Node.add_dep m'.snode m.snode;
+        update_delayed m.snode p u (m'.snode :: Node.deps m.snode);
+        r
+        
   (* Lifting *)
- 
+        
   let l1 = map
   let l2 ?(eq = ( = )) f s s' = match s, s' with
   | Smut m0, Smut m1 -> 
@@ -1093,7 +1097,7 @@ module S = struct
       and u c = supdate (f (sval m) v) m' c in 
       Node.add_dep m.snode m'.snode;
       signal m' p u
-      
+        
   let l3 ?(eq = ( = )) f s0 s1 s2 = match s0, s1, s2 with
   | Smut m0, Smut m1, Smut m2 -> 
       let r = rsucc (rmax (rmax m0.snode m1.snode) m2.snode) in
@@ -1106,7 +1110,7 @@ module S = struct
       signal m' p u
   | Const v0, Const v1, Const v2 -> Const (f v0 v1 v2)
   | s0, s1, s2 -> app ~eq (l2 ~eq:( == ) f s0 s1) s2
-
+                    
   let l4 ?(eq = ( = )) f s0 s1 s2 s3 = match s0, s1, s2, s3 with 
   | Smut m0, Smut m1, Smut m2, Smut m3 -> 
       let r = rsucc (rmax (rmax m0.snode m1.snode) (rmax m2.snode m3.snode)) in
@@ -1120,18 +1124,18 @@ module S = struct
       signal m' p u
   | Const v0, Const v1, Const v2, Const v3 -> Const (f v0 v1 v2 v3)
   | s0, s1, s2, s3 -> app ~eq (l3 ~eq:( == ) f s0 s1 s2) s3 
-
+                        
   let l5 ?(eq = ( = )) f s0 s1 s2 s3 s4 = match s0, s1, s2, s3, s4 with 
   | Smut m0, Smut m1, Smut m2, Smut m3, Smut m4 -> 
       let m = rmax in
       let r = rsucc (m (m m0.snode m1.snode) 
-		       (m m2.snode (m m3.snode m4.snode))) 
+                       (m m2.snode (m m3.snode m4.snode))) 
       in
       let m' = smut r eq in
       let rec p () = [ m0.snode; m1.snode; m2.snode; m3.snode; m4.snode ]
       and u c = 
-	let v = f (sval m0) (sval m1) (sval m2) (sval m3) (sval m4) in
-	supdate v m' c
+        let v = f (sval m0) (sval m1) (sval m2) (sval m3) (sval m4) in
+        supdate v m' c
       in 
       Node.add_dep m0.snode m'.snode;
       Node.add_dep m1.snode m'.snode;
@@ -1141,19 +1145,19 @@ module S = struct
       signal m' p u
   | Const v0, Const v1, Const v2, Const v3, Const v4 -> Const (f v0 v1 v2 v3 v4)
   | s0, s1, s2, s3, s4 -> app ~eq (l4 ~eq:( == ) f s0 s1 s2 s3) s4 
-
+                            
   let l6 ?(eq = ( = )) f s0 s1 s2 s3 s4 s5 = match s0, s1, s2, s3, s4, s5 with 
   | Smut m0, Smut m1, Smut m2, Smut m3, Smut m4, Smut m5 -> 
       let m = rmax in
       let m = m (m m0.snode (m m1.snode m2.snode)) 
-	  (m m3.snode (m m4.snode m5.snode))
+          (m m3.snode (m m4.snode m5.snode))
       in
       let m' = smut (rsucc m) eq in
       let rec p () = 
-	[ m0.snode; m1.snode; m2.snode; m3.snode; m4.snode; m5.snode ]
+        [ m0.snode; m1.snode; m2.snode; m3.snode; m4.snode; m5.snode ]
       and u c = 
-	let v = f (sval m0) (sval m1) (sval m2) (sval m3) (sval m4) (sval m5) in
-	supdate v m' c 
+        let v = f (sval m0) (sval m1) (sval m2) (sval m3) (sval m4) (sval m5) in
+        supdate v m' c 
       in 
       Node.add_dep m0.snode m'.snode;
       Node.add_dep m1.snode m'.snode;
@@ -1165,14 +1169,14 @@ module S = struct
   | Const v0, Const v1, Const v2, Const v3, Const v4, Const v5-> 
       Const (f v0 v1 v2 v3 v4 v5)
   | s0, s1, s2, s3, s4, s5 -> app ~eq (l5 ~eq:( == ) f s0 s1 s2 s3 s4) s5 
-    
+                                
   module Bool = struct
     let eq : bool -> bool -> bool = ( = ) 
     let not s = l1 ~eq not s
     let ( && ) s s' = l2 ~eq ( && ) s s' 
     let ( || ) s s' = l2 ~eq ( || ) s s'
   end
-
+  
   module Int = struct
     let eq : int -> int -> bool = ( = )
     let ( ~- ) s = l1 ~eq ( ~- ) s
@@ -1193,7 +1197,7 @@ module S = struct
     let ( lsr ) s s' = l2 ~eq ( lsr ) s s'
     let ( asr ) s s' = l2 ~eq ( asr ) s s'
   end
-
+  
   module Float = struct
     let eq : float -> float -> bool = ( = )
     let ( ~-. ) s = l1 ~eq ( ~-. ) s
@@ -1235,13 +1239,13 @@ module S = struct
     let epsilon_float = const epsilon_float
     let classify_float s = l1 ~eq:( = ) classify_float s
   end
-
+  
   module Pair = struct
     let pair ?eq s s' = l2 ?eq (fun x y -> x, y) s s'
     let fst ?eq s = l1 ?eq fst s
     let snd ?eq s = l1 ?eq snd s
   end
-
+  
   module Compare = struct 
     let eq = Bool.eq 
     let ( = ) s s' = l2 ~eq ( = ) s s'
@@ -1254,14 +1258,14 @@ module S = struct
     let ( == ) s s' = l2 ~eq ( == ) s s'
     let ( != ) s s' = l2 ~eq ( != ) s s'
   end      
-
+  
   (* Combinator specialization *)
 
   module type EqType = sig
     type 'a t 
     val equal : 'a t -> 'a t -> bool 
   end
-		
+  
   module type S = sig
     type 'a v 
     val create : 'a v -> 'a v signal * ('a v -> unit)
@@ -1281,17 +1285,17 @@ module S = struct
     val l1 : ('a -> 'b v) -> ('a signal -> 'b v signal)
     val l2 : ('a -> 'b -> 'c v) -> ('a signal -> 'b signal -> 'c v signal) 
     val l3 : ('a -> 'b -> 'c -> 'd v) -> ('a signal -> 'b signal -> 'c signal 
-      -> 'd v signal) 
+                                          -> 'd v signal) 
     val l4 : ('a -> 'b -> 'c -> 'd -> 'e v) -> 
       ('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e v signal) 
     val l5 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f v) -> 
-	('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal -> 
-	  'f v signal) 
+      ('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal -> 
+       'f v signal) 
     val l6 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g v) -> 
-	('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal -> 
-	  'f signal -> 'g v signal) 
+      ('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal -> 
+       'f signal -> 'g v signal) 
   end
-
+  
   module Make (Eq : EqType) = struct
     type 'a v = 'a Eq.t
     let eq = Eq.equal 
