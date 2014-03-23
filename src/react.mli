@@ -41,9 +41,9 @@ module E : sig
   val create : unit -> 'a event * ('a -> unit)
   (** [create ()] is a primitive event [e] and a [send] function. 
       [send v] generates an occurrence [v] of [e] at the time it is called 
-      and triggers an {{:React.html#update}update cycle}.
+      and triggers an {{:React.html#update}update step}.
 
-      {b Warning.} [send] must not be executed inside an update cycle. *)
+      {b Warning.} [send] must not be executed inside an update step. *)
 
   val retain : 'a event -> (unit -> unit) -> [ `R of (unit -> unit) ]
   (** [retain e c] keeps a reference to the closure [c] in [e] and
@@ -57,8 +57,8 @@ module E : sig
       {!never} and cannot be restarted. Allows to 
       disable {{:React.html#sideeffects}effectful} events. 
 
-      {b Note.} If executed in an {{:React.html#update}update cycle}
-      the event may still occur in the cycle. *)
+      {b Note.} If executed in an {{:React.html#update}update step}
+      the event may still occur in the step. *)
 
   val equal : 'a event -> 'a event -> bool
   (** [equal e e'] is [true] iff [e] and [e'] are equal. If both events are
@@ -240,15 +240,15 @@ module S : sig
   (** [create i] is a primitive signal [s] set to [i] and a
       [set] function.  [set v] sets the signal's value to [v] at the
       time it is called and triggers an {{:React.html#update}update
-      cycle}.
+      step}.
 
-      {b Warning.} [send] must not be executed inside an update cycle. *)
+      {b Warning.} [send] must not be executed inside an update step. *)
 
   val value : 'a signal -> 'a
   (** [value s] is [s]'s current value. 
 
       {b Warning.} If executed in an {{:React.html#update}update
-      cycle} may return a non up-to-date value or raise [Failure] if
+      step} may return a non up-to-date value or raise [Failure] if
       the signal is not yet initialized. *)
 
   val retain : 'a signal -> (unit -> unit) -> [ `R of (unit -> unit) ]
@@ -267,8 +267,8 @@ module S : sig
       with the signal's last value and cannot be restarted. Allows to
       disable {{:React.html#sideeffects}effectful} signals.
 
-      {b Note.} If executed in an update cycle the signal may 
-      still update in the cycle. *)
+      {b Note.} If executed in an update step the signal may 
+      still update in the step. *)
 
   val equal : ?eq:('a -> 'a -> bool) -> 'a signal -> 'a signal -> bool
   (** [equal s s'] is [true] iff [s] and [s'] are equal. If both
@@ -419,17 +419,17 @@ module S : sig
       [s', r = sf s] the following two cases need to be distinguished :
       {ul
       {- After [sf s] is applied, [s'] does not depend on 
-         a value that is in a cycle and [s] has no dependents in a cycle (e.g
-         in the simple case where [fix] is applied outside a cycle). 
+         a value that is in a step and [s] has no dependents in a step (e.g
+         in the simple case where [fix] is applied outside a step). 
 
          In that case if the initial value of [s'] differs from [i],
          [s] and its dependents need to be updated and a special
-         update cycle will be triggered for this. Values
+         update step will be triggered for this. Values
          depending on the result [r] will be created only after this
-         special update cycle has finished (e.g. they won't see
+         special update step has finished (e.g. they won't see
          the [i] of [s] if [r = s]).}
       {- Otherwise, values depending on [r] will be created in the same
-         cycle as [s] and [s'] (e.g. they will see the [i] of [s] if [r = s]).}}
+         step as [s] and [s'] (e.g. they will see the [i] of [s] if [r = s]).}}
    *)
 
  (** {1:lifting Lifting} 
@@ -702,17 +702,17 @@ let () = List.iter set_x [2; 2; 3]]}
     The {{:#clock}clock} example shows how a realtime time 
     flow can be defined.
 
-    {2:update The update cycle and thread safety}
+    {2:update The update step and thread safety}
 
     {{:#primitives}Primitives} are the only mean to drive the reactive
     system and they are entirely under the control of the client. When
     the client invokes a primitive's update function, React performs
-    an update cycle. The update cycle automatically updates events and
+    an update step. The update step automatically updates events and
     signals that transitively depend on the updated primitive. The
     dependents of a signal are updated iff the signal's value changed
     according to its {{:#sigeq}equality function}.
 
-    To ensure correctness in the presence of threads, update cycles
+    To ensure correctness in the presence of threads, update steps
     must be executed in a critical section. Let uset([p]) be the set
     of events and signals that need to be updated whenever the
     primitive [p] is updated.  Updating two primitives [p] and [p']
@@ -730,12 +730,12 @@ let max_xy = S.l2 (fun x y -> if x > y then x else y) x (S.hold 0 y)
 let succ_z = S.map succ z]}
     {2:simultaneity Simultaneous events}
 
-    {{:#update}Update cycles} are made under a 
+    {{:#update}Update steps} are made under a 
     {{:http://dx.doi.org/10.1016/0167-6423(92)90005-V}synchrony hypothesis} :
-    the update cycle takes no time, it is instantenous. 
+    the update step takes no time, it is instantenous. 
 
     Two event occurrences are {e simultaneous} if they occur in the
-    same update cycle; in other words if there exists a primitive on
+    same update step; in other words if there exists a primitive on
     which they both depend. By definition a primitive doesn't depend
     on any primitive it is therefore impossible for two primitive
     events to occur simultaneously.
@@ -750,10 +750,10 @@ let z, send_z = E.create ()]}
     {2:sideeffects Side effects}
 
     Effectful events and signals perform their side effect
-    exactly {e once} in each {{:#update}update cycle} in which there
+    exactly {e once} in each {{:#update}update step} in which there
     is an update of at least one of the event or signal it depends on.
 
-    Remember that a signal updates in a cycle iff its 
+    Remember that a signal updates in a step iff its 
     {{:#sigeq}equality function} determined that the signal
     value changed. Signal initialization is unconditionally considered as 
     an update.    
@@ -824,13 +824,13 @@ let f t = sqrt t *. sin t in (* f is defined on float signals *)
   S.fix [] define]}
   When a program has infinitesimally delayed values a
   {{:#primitives}primitive} may trigger more than one update
-  cycle. For example if a signal [s] is infinitesimally delayed, then
-  its update in a cycle [c] will trigger a new cycle [c'] at the end
-  of the cycle in which the delayed signal of [s] will have the value
+  step. For example if a signal [s] is infinitesimally delayed, then
+  its update in a step [c] will trigger a new step [c'] at the end
+  of the step in which the delayed signal of [s] will have the value
   [s] had in [c]. This means that the recursion occuring between a
   signal (or event) and its infinitesimally delayed counterpart must
   be well-founded otherwise this may trigger an infinite number
-  of update cycles, like in the following examples.
+  of update steps, like in the following examples.
 {[let start, send_start = E.create ()
 let diverge = 
   let define e = 

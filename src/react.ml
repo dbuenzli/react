@@ -72,10 +72,10 @@ end
 
 type node = 
     { mutable rank : int;        (* its rank (height) in the dataflow graph. *)
-      mutable stamp : cycle;        (* last cycle in which it was scheduled. *)
+      mutable stamp : step;          (* last step in which it was scheduled. *)
       mutable retain : unit -> unit; (* retained by the node, NEVER invoked. *)
       mutable producers : unit -> node list;   (* nodes on which it depends. *) 
-      mutable update : cycle -> unit;                     (* update closure. *)
+      mutable update : step -> unit;                      (* update closure. *)
       deps : node Wa.t }              (* weak references to dependent nodes. *)
 (* The type for nodes. 
 
@@ -89,38 +89,41 @@ type node =
    (needed for recursive definitions). These nodes all have a rank of
    Node.delayed_rank and depend only on the node they delay. Since
    they have the highest rank possible they are updated only at the
-   end of the cycle and treated specially at that point (see
-   Cycle.execute). *)
+   end of the step and treated specially at that point (see
+   Step.execute). *)
 
-and cycle = 
-    { mutable over : bool;                   (* true when the cycle is over. *)
+and step = 
+    { mutable over : bool;                    (* true when the step is over. *)
       mutable heap : heap;              (* min-heap of nodes sorted by rank. *)
-      mutable eops : (unit -> unit) list;        (* end of cycle operations. *)
-      mutable cops : (unit -> unit) list }      (* cleanup cycle operations. *)
-(* The type for update cycles.
+      mutable eops : (unit -> unit) list;         (* end of step operations. *)
+      mutable cops : (unit -> unit) list }       (* cleanup step operations. *)
+(* The type for update steps.
+   
+   Note for historical reasons we use the variable names [c] and [c'] 
+   in the code for representing update steps.
 
-   There are four successive phases in the execution of a cycle c (see
-   Cycle.execute).
+   There are four successive phases in the execution of a step c (see
+   Step.execute).
 
    1. Nodes are updated in topological order until c.heap is empty or
       we reach a delayed node.
 
-   2. End of cycle operations are executed. This may add new
+   2. End of step operations are executed. This may add new
       dependencies (see S.diff and S.changes) and clear the occurence
-      of delayed events from a previous cycle (but used in this
-      cycle).
+      of delayed events from a previous step (but used in this
+      step).
 
-   3. If there are delayed nodes in c.heap, we create a new cycle
+   3. If there are delayed nodes in c.heap, we create a new step
       c'. Each delayed node is updated and its dependents are put in
-      c'.heap. For delayed events, an end of cycle operation is added
+      c'.heap. For delayed events, an end of step operation is added
       in c' to clear the occurence at step 2 of c'. Delayed nodes are
-      updated in any order as a delayed node updating in a cycle
-      cannot depend on a delayed node updating in the same cycle.
+      updated in any order as a delayed node updating in a step
+      cannot depend on a delayed node updating in the same step.
 
    4. Cleanup operations are executed. This clears the event occurences of 
       non-delayed event that occured in c.
 
-   After this, if a cycle c' was created in 3. the cycle gets executed. *)
+   After this, if a step c' was created in 3. the step gets executed. *)
 
 and heap = node Wa.t
 (* The type for heaps. 
@@ -141,27 +144,27 @@ and heap = node Wa.t
    by percolating down from that point. *)
 
 type 'a emut = 
-    { ev : 'a option ref;     (* during cycles, holds a potential occurence. *)
+    { ev : 'a option ref;     (* during steps, holds a potential occurence. *)
       enode : node; }                                    (* associated node. *)
 
 type 'a event = Never | Emut of 'a emut
 (* The type for events.
 
    An event is either the never occuring event Never or a mutable
-   Emut.  A mutable m has some value in m.v iff a cycle is being
-   executed and m has an occurence in the cycle. m's dependents are
+   Emut.  A mutable m has some value in m.v iff a step is being
+   executed and m has an occurence in the step. m's dependents are
    scheduled for update iff m has a value in m.v.
 
-   Mutables that occur in a cycle are set back to None when the cycle
-   terminates with an cleanup cycle operation (see eupdate and
-   Cycle.execute). To avoid a weak reference on m in the cleanup
+   Mutables that occur in a step are set back to None when the step
+   terminates with an cleanup step operation (see eupdate and
+   Step.execute). To avoid a weak reference on m in the cleanup
    operation, the field m.v is a field on a reference instead of a
    mutable field.
 
    A new node n can be made dependent on a an event mutable m during a
-   cycle. But when n is added to m's dependents, m may already have
+   step. But when n is added to m's dependents, m may already have
    updated and scheduled its dependents. In that case n also need to
-   be scheduled (see E.add_dep). If m only occurs later in the cycle,
+   be scheduled (see E.add_dep). If m only occurs later in the step,
    the n will be scheduled as usual with the others. *)
 
 type 'a smut = 
@@ -175,17 +178,17 @@ type 'a signal = Const of 'a | Smut of 'a smut
    A signal is either a constant signal Const or a mutable Smut.  A
    mutable m has a value in m.v iff m.v initialized. m's dependents
    are scheduled for update iff m is initialized and m.v changed
-   according to m.eq in the cycle.
+   according to m.eq in the step.
 
    Signal initialization occurs as follows. If we have an init. value
    we set the signal's value to this value and then :
 
-   1. If the creation occurs outside a cycle, the signal's update
-      function is invoked with Cycle.nil. This may overwrite the
+   1. If the creation occurs outside a step, the signal's update
+      function is invoked with Step.nil. This may overwrite the
       init. value, but no dependent will see this change as there
       cannot be any at that time.
 
-   2. If the creation occurs inside a cycle, the signal is scheduled
+   2. If the creation occurs inside a step, the signal is scheduled
       for update. Here again this may overwrite the init. value. If
       the new value is equal to the init. value this will not schedule
       the signals' dependents. However this is not a problem since
@@ -197,21 +200,21 @@ type 'a signal = Const of 'a | Smut of 'a smut
   update function must unconditionaly write a concrete value for the
   signal.
 
-  To find out whether the creation occurs in a cycle we walk back the
+  To find out whether the creation occurs in a step we walk back the
   signal's producers recursively looking for a node stamp with an
-  unfinished cycle (see Cycle.find_unfinished). This is not in favor
+  unfinished step (see Step.find_unfinished). This is not in favor
   of static signal creation but this is the price we have to pay for
   not having global data structures.
 
   A new node n can be made dependent on a signal mutable m during a
-  cycle. In contrast to events (see above) nothing special has to be
+  step. In contrast to events (see above) nothing special has to be
   done. Here's the rationale :
 
   1. If n is the node of a new event then either the event cannot
-     happen in the same cycle and thus the depency addition occurs at
-     the end of the cycle (S.diff, S.changes) or the event cares only
+     happen in the same step and thus the depency addition occurs at
+     the end of the step (S.diff, S.changes) or the event cares only
      about having an up to date value if some other event occurs
-     (S.sample, E.when_) in the same cycle and the rank of n ensures
+     (S.sample, E.when_) in the same step and the rank of n ensures
      this.
 
   2. If n is the node of a new signal then n cares only about having
@@ -267,7 +270,7 @@ end
 
 let delayed_rank = max_int 
 
-module Cycle = struct                                      (* Update cycles. *)
+module Step = struct                                       (* Update steps. *)
   let nil = { over = true; heap = Wa.create 0; eops = []; cops = []}
   let create n =
     let h = Wa.create (3 * Wa.length n.deps) in 
@@ -295,7 +298,7 @@ module Cycle = struct                                      (* Update cycles. *)
     in
     update c
 
-  let find_unfinished nl = (* find unfinished cycle in recursive producers. *)
+  let find_unfinished nl = (* find unfinished step in recursive producers. *)
     let rec aux next = function            (* zig-zag breadth-first search. *)
       | [] -> if next = [] then nil else aux [] next
       | [] :: todo -> aux next todo 
@@ -317,7 +320,7 @@ module Node = struct
   let nop _ = ()
   let no_producers () = []
   let create r = 
-    { rank = r; stamp = Cycle.nil; update = nop; retain = nop;
+    { rank = r; stamp = Step.nil; update = nop; retain = nop;
       producers = no_producers; deps = Wa.create 0 }
 
   let bind n p u = n.producers <- p; n.update <- u
@@ -368,8 +371,8 @@ let event m p u = Node.bind m.enode p u; Emut m
 let eupdate v m c =
   let clear v () = v := None in 
   m.ev := Some v;
-  Cycle.add_cop c (clear m.ev);
-  Cycle.add_deps c m.enode
+  Step.add_cop c (clear m.ev);
+  Step.add_deps c m.enode
 
 (* Signal value, creation and update *)
 
@@ -378,15 +381,15 @@ let smut rank eq = { sv = None; eq = eq; snode = Node.create rank }
 let signal ?i m p u = 
   Node.bind m.snode p u;
   begin match i with Some _ as v -> m.sv <- v | None -> () end;
-  begin match Cycle.find_unfinished (m.snode.producers ()) with
-  | c when c == Cycle.nil -> m.snode.update Cycle.nil
-  | c -> Cycle.add c m.snode
+  begin match Step.find_unfinished (m.snode.producers ()) with
+  | c when c == Step.nil -> m.snode.update Step.nil
+  | c -> Step.add c m.snode
   end;
   Smut m
 
 let supdate v m c = match m.sv with 
 | Some v' when (m.eq v v') -> ()
-| Some _ -> m.sv <- Some v; if c != Cycle.nil then Cycle.add_deps c m.snode
+| Some _ -> m.sv <- Some v; if c != Step.nil then Step.add_deps c m.snode
 | None -> m.sv <- Some v                       (* init. without init value. *)
 
 module E = struct
@@ -394,13 +397,13 @@ module E = struct
 
   let add_dep m n = 
     Node.add_dep m.enode n;
-    if !(m.ev) <> None then Cycle.add m.enode.stamp n
+    if !(m.ev) <> None then Step.add m.enode.stamp n
 
-  let send m v =                                  (* starts an update cycle. *)
-    let c = Cycle.create m.enode in
+  let send m v =                                  (* starts an update step. *)
+    let c = Step.create m.enode in
     m.enode.stamp <- c;
     eupdate v m c;
-    Cycle.execute c
+    Step.execute c
 
   (* Basics *)
 
@@ -690,8 +693,8 @@ module E = struct
 		       update and we may be rescheduled. If it happens
 		       we'll be in the other branch without any harm
 		       but some redundant computation. *)
-		    Cycle.allow_reschedule m'.enode;
-		    Cycle.rebuild c;
+		    Step.allow_reschedule m'.enode;
+		    Step.rebuild c;
 		  end
 		else
 		  (* No rank increase, m already updated if needed. *)
@@ -709,11 +712,11 @@ module E = struct
     | Emut m', r -> 
 	if m'.enode.rank = Node.delayed_rank then invalid_arg err_fix;
 	let rec p () = [ (* avoid cyclic dep. *) ]                  
-	and u c =                               (* N.B. c is the next cycle. *)
+	and u c =                               (* N.B. c is the next step. *)
 	  let clear v () = v := None in 
 	  m.ev := Some (eval m');
-          Cycle.add_eop c (clear m.ev);   (* vs. add_cop for regular events. *)
-          Cycle.add_deps c m.enode
+          Step.add_eop c (clear m.ev);   (* vs. add_cop for regular events. *)
+          Step.add_deps c m.enode
 	in
 	Node.bind m.enode p u;
 	add_dep m' m.enode;
@@ -723,14 +726,14 @@ end
 module S = struct
   type 'a t = 'a signal
 	
-  let set_sval v m c = m.sv <- Some v; Cycle.add_deps c m.snode
-  let set m v =                                   (* starts an update cycle. *)
+  let set_sval v m c = m.sv <- Some v; Step.add_deps c m.snode
+  let set m v =                                   (* starts an update step. *)
     if m.eq (sval m) v then () else
-    let c = Cycle.create m.snode in
+    let c = Step.create m.snode in
     m.snode.stamp <- c;
     m.sv <- Some v; 
-    Cycle.add_deps c m.snode;
-    Cycle.execute c
+    Step.add_deps c m.snode;
+    Step.execute c
 
   (* Basics *)
 
@@ -866,18 +869,18 @@ module S = struct
 	  | Some v' -> last := Some v; eupdate (d v v') m' c
 	  | None -> assert false
 	in
-	begin match Cycle.find_unfinished (m.snode.producers ()) with
-	| c when c == Cycle.nil -> 
+	begin match Step.find_unfinished (m.snode.producers ()) with
+	| c when c == Step.nil -> 
 	    Node.add_dep m.snode m'.enode; last := Some (sval m)
-	| c -> (* In a cycle, m' cannot occur in that cycle (cf. semantics).
-		  Dep. added at the end of cycle to avoid being scheduled. *)
+	| c -> (* In a step, m' cannot occur in that step (cf. semantics).
+		  Dep. added at the end of step to avoid being scheduled. *)
 	    let setup () =
 	      if m.snode.update == Node.nop then 
-		() (* m stopped in cycle *) 
+		() (* m stopped in step *) 
 	      else
 		(Node.add_dep m.snode m'.enode; last := Some (sval m))
 	    in 
-	    Cycle.add_eop c setup 
+	    Step.add_eop c setup 
 	end;
 	event m' p u
 
@@ -887,17 +890,17 @@ module S = struct
 	let m' = emut (rsucc m.snode) in
 	let rec p () = [ m.snode ]
 	and u c = eupdate (sval m) m' c in
-	begin match Cycle.find_unfinished (m.snode.producers ()) with
-	| c when c == Cycle.nil -> Node.add_dep m.snode m'.enode 
-	| c -> (* In a cycle, m' cannot occur in that cycle (cf. semantics).
-                  Dep. added at the end of cycle to avoid being scheduled. *)
+	begin match Step.find_unfinished (m.snode.producers ()) with
+	| c when c == Step.nil -> Node.add_dep m.snode m'.enode 
+	| c -> (* In a step, m' cannot occur in that step (cf. semantics).
+                  Dep. added at the end of step to avoid being scheduled. *)
 	    let setup () = 
 	      if m.snode.update == Node.nop then 
-		() (* m stopped in cycle *) 
+		() (* m stopped in step *) 
 	      else
 		(Node.add_dep m.snode m'.enode)
 	    in
-	    Cycle.add_eop c setup
+	    Step.add_eop c setup
 	end;
 	event m' p u
 
@@ -1025,9 +1028,9 @@ module S = struct
 		    (* Rank increased because of m. Thus m may still
 		       update and we need to reschedule. Next time we 
 		       will be in the other branch. *)
-		    Cycle.allow_reschedule m'.snode;
-		    Cycle.rebuild c;
-		    Cycle.add c m'.snode
+		    Step.allow_reschedule m'.snode;
+		    Step.rebuild c;
+		    Step.add c m'.snode
 		  end
 		else
 		  (* No rank increase. m already updated if needed. 
@@ -1042,13 +1045,13 @@ module S = struct
   let fix ?(eq = ( = )) i f = 
     let update_delayed n p u nl = 
       Node.bind n p u;
-      match Cycle.find_unfinished nl with
-      | c when c == Cycle.nil -> 
-	  (* no pertinent occuring cycle, create a cycle for update. *)
-	  let c = Cycle.create n in 
+      match Step.find_unfinished nl with
+      | c when c == Step.nil -> 
+	  (* no pertinent occuring step, create a step for update. *)
+	  let c = Step.create n in 
 	  n.update c;
-	  Cycle.execute c
-      | c -> Cycle.add c n
+	  Step.execute c
+      | c -> Step.add c n
     in
     let m = smut Node.delayed_rank eq in
     let s = signal ~i m (fun () -> []) (fun _ -> ()) in
@@ -1061,7 +1064,7 @@ module S = struct
     | Smut m', r -> 
 	if m'.snode.rank = Node.delayed_rank then invalid_arg err_fix;
 	let rec p () = [ (* avoid cyclic dep. *) ]
-	and u c = supdate (sval m') m c in    (* N.B. c is the next cycle. *)
+	and u c = supdate (sval m') m c in    (* N.B. c is the next step. *)
 	Node.add_dep m'.snode m.snode;
 	update_delayed m.snode p u (m'.snode :: Node.deps m.snode);
 	r
