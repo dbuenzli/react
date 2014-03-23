@@ -8,12 +8,12 @@
 
     React is a module for functional reactive programming (frp).  It
     provides support to program with time varying values : declarative
-    {{:React.E.html}events} and {{:React.S.html}signals}. React
+    {{!E}events} and {{!S}signals}. React
     doesn't define any primitive event or signal, this lets the client
     choose the concrete timeline.
 
-    Consult the {{:#sem}semantics}, the {{:#basics}basics} and
-    {{:#ex}examples}. Open the module to use it, this defines only two
+    Consult the {{!sem}semantics}, the {{!basics}basics} and
+    {{!ex}examples}. Open the module to use it, this defines only two
     types and modules in your scope.
 
     {e Release %%VERSION%% - %%AUTHORS%% } *)
@@ -28,7 +28,7 @@ type 'a signal
 
 (** Event combinators.  
 
-    Consult their {{:React.html#evsem}semantics.} *)
+    Consult their {{!evsem}semantics.} *)
 module E : sig
   (** {1:prim Primitive and basics} *)
 
@@ -41,7 +41,7 @@ module E : sig
   val create : unit -> 'a event * ('a -> unit)
   (** [create ()] is a primitive event [e] and a [send] function. 
       [send v] generates an occurrence [v] of [e] at the time it is called 
-      and triggers an {{:React.html#update}update step}.
+      and triggers an {{!update}update step}.
 
       {b Warning.} [send] must not be executed inside an update step. *)
 
@@ -55,9 +55,9 @@ module E : sig
   val stop : 'a event -> unit
   (** [stop e] stops [e] from occuring. It conceptually becomes
       {!never} and cannot be restarted. Allows to 
-      disable {{:React.html#sideeffects}effectful} events. 
+      disable {{!sideeffects}effectful} events. 
 
-      {b Note.} If executed in an {{:React.html#update}update step}
+      {b Note.} If executed in an {{!update}update step}
       the event may still occur in the step. *)
 
   val equal : 'a event -> 'a event -> bool
@@ -88,7 +88,7 @@ module E : sig
 
   val app : ('a -> 'b) event -> 'a event -> 'b event
   (** [app ef e] occurs when both [ef] and [e] occur
-      {{:React.html#simultaneity}simultaneously}.
+      {{!simultaneity}simultaneously}.
       The value is [ef]'s occurence applied to [e]'s one.
       {ul 
       {- \[[app ef e]\]{_t} [= Some v'] if \[[ef]\]{_t} [= Some f] and 
@@ -184,7 +184,7 @@ module E : sig
 
   val select : 'a event list -> 'a event
   (** [select el] is the occurrences of every event in [el]. 
-      If more than one event occurs {{:React.html#simultaneity}simultaneously}
+      If more than one event occurs {{!simultaneity}simultaneously}
       the leftmost is taken and the others are lost.
       {ul
       {- \[[select el]\]{_ t} [=] \[[List.find (fun e -> ]\[[e]\]{_t} 
@@ -192,7 +192,7 @@ module E : sig
       {- \[[select el]\]{_ t} [= None] otherwise.}}  *)
 
   val merge : ('a -> 'b -> 'a) -> 'a -> 'b event list -> 'a event
-      (** [merge f a el] merges the {{:React.html#simultaneity}simultaneous}
+      (** [merge f a el] merges the {{!simultaneity}simultaneous}
 	  occurrences of every event in [el] using [f] and the accumulator [a].
 	  
 	  \[[merge f a el]\]{_ t} 
@@ -226,7 +226,7 @@ end
 
 (** Signal combinators. 
 
-    Consult their {{:React.html#sigsem}semantics.}  *)
+    Consult their {{!sigsem}semantics.}  *)
 module S : sig
   (** {1:prim Primitive and basics} *)
 
@@ -239,7 +239,7 @@ module S : sig
   val create : ?eq:('a -> 'a -> bool) -> 'a -> 'a signal * ('a -> unit)
   (** [create i] is a primitive signal [s] set to [i] and a
       [set] function.  [set v] sets the signal's value to [v] at the
-      time it is called and triggers an {{:React.html#update}update
+      time it is called and triggers an {{!update}update
       step}.
 
       {b Warning.} [send] must not be executed inside an update step. *)
@@ -247,7 +247,7 @@ module S : sig
   val value : 'a signal -> 'a
   (** [value s] is [s]'s current value. 
 
-      {b Warning.} If executed in an {{:React.html#update}update
+      {b Warning.} If executed in an {{!update}update
       step} may return a non up-to-date value or raise [Failure] if
       the signal is not yet initialized. *)
 
@@ -265,7 +265,7 @@ module S : sig
   val stop : 'a signal -> unit
   (** [stop s], stops updating [s]. It conceptually becomes {!const}
       with the signal's last value and cannot be restarted. Allows to
-      disable {{:React.html#sideeffects}effectful} signals.
+      disable {{!sideeffects}effectful} signals.
 
       {b Note.} If executed in an update step the signal may 
       still update in the step. *)
@@ -642,7 +642,7 @@ end
     {2:sigsem Signals} 
 
     A signal is a value that varies continuously over time. In
-    contrast to {{:#evsem}events} which occur at specific point
+    contrast to {{!evsem}events} which occur at specific point
     in time, a signal has a value at every point in time.
 
     The semantic function \[\] [: 'a signal -> time -> 'a] gives
@@ -656,14 +656,15 @@ end
     function used to detect changes in the value of the resulting
     signal. This function is needed for the efficient update of
     signals and to deal correctly with signals that perform
-    {{:#sideeffects}side effects}.  
+    {{!sideeffects}side effects}.  
 
     Given an equality function on a type the combinators can be automatically
-    {{:React.S.html#special}specialized} via a functor.
+    {{!S.special}specialized} via a functor.
+
     {3:sigcont Continuity}
 
     Ultimately signal updates depend on
-    {{:#primitives}primitive} updates. Thus a signal can
+    {{!primitives}primitives} updates. Thus a signal can
     only approximate a real continuous signal. The accuracy of the
     approximation depends on the variation rate of the real signal and
     the primitive's update frequency.
@@ -693,24 +694,24 @@ let () = List.iter send_x [1; 2; 3]]}
     effectful signal [pr_x]. Note that only updates that change
     the signal's value are printed, hence the program prints [123], not [1223].
     See the discussion on 
-    {{:#sideeffects}side effects} for more details.
+    {{!sideeffects}side effects} for more details.
 {[open React;;
 
 let x, set_x = S.create 1
 let pr_x = S.map print_int x
 let () = List.iter set_x [2; 2; 3]]}
-    The {{:#clock}clock} example shows how a realtime time 
+    The {{!clock}clock} example shows how a realtime time 
     flow can be defined.
 
     {2:update The update step and thread safety}
 
-    {{:#primitives}Primitives} are the only mean to drive the reactive
+    {{!primitives}Primitives} are the only mean to drive the reactive
     system and they are entirely under the control of the client. When
     the client invokes a primitive's update function, React performs
     an update step. The update step automatically updates events and
     signals that transitively depend on the updated primitive. The
     dependents of a signal are updated iff the signal's value changed
-    according to its {{:#sigeq}equality function}.
+    according to its {{!sigeq}equality function}.
 
     To ensure correctness in the presence of threads, update steps
     must be executed in a critical section. Let uset([p]) be the set
@@ -730,7 +731,7 @@ let max_xy = S.l2 (fun x y -> if x > y then x else y) x (S.hold 0 y)
 let succ_z = S.map succ z]}
     {2:simultaneity Simultaneous events}
 
-    {{:#update}Update steps} are made under a 
+    {{!update}Update steps} are made under a 
     {{:http://dx.doi.org/10.1016/0167-6423(92)90005-V}synchrony hypothesis} :
     the update step takes no time, it is instantenous. 
 
@@ -750,11 +751,11 @@ let z, send_z = E.create ()]}
     {2:sideeffects Side effects}
 
     Effectful events and signals perform their side effect
-    exactly {e once} in each {{:#update}update step} in which there
+    exactly {e once} in each {{!update}update step} in which there
     is an update of at least one of the event or signal it depends on.
 
     Remember that a signal updates in a step iff its 
-    {{:#sigeq}equality function} determined that the signal
+    {{!sigeq}equality function} determined that the signal
     value changed. Signal initialization is unconditionally considered as 
     an update.    
 
@@ -770,7 +771,7 @@ let () = Gc.full_major (); List.iter set_x [2; 2; 3]]}
     The combinators
     {!S.const} and {!S.app} allow to lift functions of arbitrary arity n,
     but this involves the inefficient creation of n-1 intermediary
-    closure signals. The fixed arity {{:React.S.html#lifting}lifting
+    closure signals. The fixed arity {{!S.lifting}lifting
     functions} are more efficient. For example :
 {[let f x y = x mod y
 let fl x y = S.app (S.app ~eq:(==) (S.const f) x) y (* inefficient *)
@@ -823,7 +824,7 @@ let f t = sqrt t *. sin t in (* f is defined on float signals *)
   in
   S.fix [] define]}
   When a program has infinitesimally delayed values a
-  {{:#primitives}primitive} may trigger more than one update
+  {{!primitives}primitive} may trigger more than one update
   step. For example if a signal [s] is infinitesimally delayed, then
   its update in a step [c] will trigger a new step [c'] at the end
   of the step in which the delayed signal of [s] will have the value
