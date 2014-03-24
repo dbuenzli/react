@@ -634,7 +634,7 @@ let test_merge () =
   List.iter empty [assert_z; !assert_dz; !assert_dhz];
   keep_sref create_dyn
 
-let esswitch s es = (* Pre 1.0.0 switch *)
+let esswitch s es = (* Pre 1.0.0 S.switch *)
   S.switch (S.hold ~eq:( == ) s es) 
   
 let test_switch () =
@@ -1116,7 +1116,7 @@ let test_already_scheduled_raise () =
   (try set ~step:step2 7; assert false with Invalid_argument _ -> ());
   ()
   
-let test_simulatenous () = 
+let test_simultaneous () = 
   let e1, send1 = E.create () in 
   let e2, send2 = E.create () in 
   let s1, set1 = S.create 99 in 
@@ -1143,11 +1143,29 @@ let test_simulatenous () =
   empty assert_dismiss;
   empty assert_when_;
   ()
- 
+
+let test_multistep () = 
+  let e, send = E.create () in 
+  let s, set = S.create 0 in 
+  let assert_e = occs e [1; 2] in 
+  let assert_s = vals s [0; 1; 2] in 
+  let step = Step.create () in 
+  send ~step 1; 
+  set ~step 1;
+  Step.execute step; 
+  let step = Step.create () in 
+  send ~step 2; 
+  set ~step 2;
+  Step.execute step;
+  empty assert_e; 
+  empty assert_s;
+  ()
+
 let test_steps () =
   test_executed_raise ();
   test_already_scheduled_raise ();
-  test_simulatenous ();
+  test_simultaneous ();
+  test_multistep ();
   ()
   
 (* bug fixes *)

@@ -445,7 +445,7 @@ module E = struct
   let send m ?step v = match step with          (* sends an event occurence. *)
   | Some c ->
       if c.over then invalid_arg err_step_executed else
-      if m.enode.stamp != Step.nil then invalid_arg err_event_scheduled else
+      if not m.enode.stamp.over then invalid_arg err_event_scheduled else
       m.enode.stamp <- c; 
       eupdate v m c
   | None ->
@@ -782,7 +782,7 @@ module S = struct
     match step with 
     | Some c -> 
         if c.over then invalid_arg err_step_executed else
-        if m.snode.stamp != Step.nil then invalid_arg err_signal_scheduled else
+        if not m.snode.stamp.over then invalid_arg err_signal_scheduled else
         m.snode.stamp <- c; 
         m.sv <- Some v; 
         Step.add_deps c m.snode
