@@ -1,4 +1,4 @@
-<**/*.ml> : bin_annot, annot
+<**/*.{ml,mli}> : bin_annot, annot
 <src> : include
 <test> : include
 <test/clock.{native,byte}> : use_unix
