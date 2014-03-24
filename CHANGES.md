@@ -2,6 +2,20 @@ v0.9.5 YYYY-MM-DD Loc
 --------------------------
 
 - OPAM friendly workflow and drop OASIS support.
+- Add `S.bind`.
+
+The following changes are incompatible.
+
+- Add support for update steps, see the `React.Step` module. Allows to
+  specify simultaneous primitive signal updates and event occurences.
+  The functions returned by `{S,E}.create` now have an optional
+  `?step` argument; if unused the previous semantics is preserved.
+- Add support for strong stops, can be used on platforms where weak
+  arrays are not to prevent leaks. The function `{E,S}.stop` now have
+  an optional `?strong` argument; if unused the previous semantics is
+  preserved.
+- Change signature of `S.switch`. Any existing call `S.switch ~eq s es` can 
+  be replaced by `S.(switch ~eq (hold ~eq:( == ) s es))`.
 
 
 v0.9.4 2012-08-05 Lausanne

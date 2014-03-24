@@ -295,7 +295,7 @@ let test_merge () =
   List.iter empty [assert_z; !assert_dz];
   keep_eref create_dyn
 
-let test_switch () = 
+let test_switch () =
   let x, send_x = E.create () in
   let switch e = 
     E.fmap (fun v -> if v mod 3 = 0 then Some (E.map (( * ) v) e) else None) x
@@ -634,38 +634,83 @@ let test_merge () =
   List.iter empty [assert_z; !assert_dz; !assert_dhz];
   keep_sref create_dyn
 
+let esswitch s es = (* Pre 1.0.0 switch *)
+  S.switch (S.hold ~eq:( == ) s es) 
+  
 let test_switch () =
-  let x, send_x = E.create () in 
-  let s = S.hold 0 x in
+  let s, set_s = S.create 0 in
   let switch s = 
-    E.fmap (fun v -> if v mod 3 = 0 then Some (S.map (( * ) v) s) else None) x
+    let map v = 
+      if v mod 3 = 0 && v <> 0 then Some (S.map (( * ) v) s) else None 
+    in
+    S.fmap ~eq:( == ) map s s
   in
-  let sw = S.switch s (switch s) in
-  let hsw = S.switch s (switch (high_s s)) in
+  let sw = S.switch (switch s) in 
+  let hsw = S.switch (switch (high_s s)) in 
   let assert_sw = vals sw [0; 1; 2; 9; 12; 15; 36; 42; 48; 81] in
   let assert_hsw = vals hsw [0; 1; 2; 9; 12; 15; 36; 42; 48; 81] in
   let assert_dsw = assert_s_stub 0 in
   let assert_dhsw = assert_s_stub 0 in
   let dyn () = 
-    let dsw = S.switch s (switch s) in 
-    let dhsw = S.switch s (switch (high_s s)) in
+    let dsw = S.switch (switch s) in 
+    let dhsw = S.switch (switch (high_s s)) in
+    assert_dsw := vals dsw [9; 12; 15; 36; 42; 48; 81];
+    assert_dhsw := vals dhsw [9; 12; 15; 36; 42; 48; 81];
+  in
+  let create_dyn = S.map (fun v -> if v = 3 then dyn ()) s in 
+  Gc.full_major (); 
+  List.iter set_s [1; 1; 2; 2; 3; 4; 4; 5; 5; 6; 6; 7; 7; 8; 8; 9; 9];
+  List.iter empty [assert_sw; assert_hsw; !assert_dsw; !assert_dhsw ]; 
+  keep_sref create_dyn
+
+let test_esswitch () =
+  let x, send_x = E.create () in 
+  let s = S.hold 0 x in
+  let switch s = 
+    E.fmap (fun v -> if v mod 3 = 0 then Some (S.map (( * ) v) s) else None) x
+  in
+  let sw = esswitch s (switch s) in
+  let hsw = esswitch s (switch (high_s s)) in
+  let assert_sw = vals sw [0; 1; 2; 9; 12; 15; 36; 42; 48; 81] in
+  let assert_hsw = vals hsw [0; 1; 2; 9; 12; 15; 36; 42; 48; 81] in
+  let assert_dsw = assert_s_stub 0 in
+  let assert_dhsw = assert_s_stub 0 in
+  let dyn () = 
+    let dsw = esswitch s (switch s) in 
+    let dhsw = esswitch s (switch (high_s s)) in
     assert_dsw := vals dsw [9; 12; 15; 36; 42; 48; 81];
     assert_dhsw := vals dhsw [9; 12; 15; 36; 42; 48; 81];
   in
   let create_dyn = E.map (fun v -> if v = 3 then dyn ()) x in 
   Gc.full_major ();
   List.iter send_x [1; 1; 2; 2; 3; 4; 4; 5; 5; 6; 6; 7; 7; 8; 8; 9; 9];
-  List.iter empty [assert_sw; assert_hsw; !assert_dsw; !assert_dhsw];
+  List.iter empty [assert_sw; assert_hsw; !assert_dsw; !assert_dhsw ];
   keep_eref create_dyn
 
-let test_switch_const () = 
-  let x, send_x = E.create () in 
-  let switch = E.map (fun x -> S.const x) x in
-  let sw = S.switch (S.const 0) switch in
+let test_switch_const () =
+  let s, set_s = S.create 0 in 
+  let switch = S.map (fun x -> S.const x) s in
+  let sw = S.switch switch in
   let assert_sw = vals sw [0; 1; 2; 3] in
   let assert_dsw = assert_s_stub 0 in 
   let dyn () = 
-    let dsw = S.switch (S.const 0) switch in 
+    let dsw = S.switch switch in 
+    assert_dsw := vals dsw [2; 3];
+  in
+  let create_dyn = S.map (fun v -> if v = 2 then dyn ()) s in 
+  Gc.full_major ();
+  List.iter set_s [0; 1; 2; 3];
+  List.iter empty [assert_sw; !assert_dsw ];
+  keep_sref create_dyn
+
+let test_esswitch_const () = 
+  let x, send_x = E.create () in 
+  let switch = E.map (fun x -> S.const x) x in
+  let sw = esswitch (S.const 0) switch in
+  let assert_sw = vals sw [0; 1; 2; 3] in
+  let assert_dsw = assert_s_stub 0 in 
+  let dyn () = 
+    let dsw = esswitch (S.const 0) switch in 
     assert_dsw := vals dsw [2; 3];
   in
   let create_dyn = E.map (fun v -> if v = 2 then dyn ()) x in 
@@ -673,8 +718,32 @@ let test_switch_const () =
   List.iter send_x [0; 1; 2; 3];
   List.iter empty [assert_sw; !assert_dsw ];
   keep_eref create_dyn
+
+let test_switch1 () = (* dynamic creation depends on triggering prim. *)
+  let x, set_x = S.create 0 in
+  let dcount = ref 0 in 
+  let assert_d1 = assert_s_stub 0 in 
+  let assert_d2 = assert_s_stub 0 in 
+  let assert_d3 = assert_s_stub 0 in 
+  let dyn v = 
+    let d = S.map (fun x -> v * x) x in
+    begin match !dcount with 
+    | 0 -> assert_d1 := vals d [9; 12; 15; 18; 21; 24; 27]
+    | 1 -> assert_d2 := vals d [36; 42; 48; 54]
+    | 2 -> assert_d3 := vals d [81]
+    | _ -> assert false 
+    end;
+    incr dcount;
+    d
+  in
+  let change x = if x mod 3 = 0 && x <> 0 then Some (dyn x) else None in 
+  let s = S.switch (S.fmap change x x) in 
+  let assert_s = vals s [0; 1; 2; 9; 12; 15; 36; 42; 48; 81 ] in
+  Gc.full_major ();
+  List.iter set_x [1; 1; 2; 3; 3; 4; 5; 6; 6; 7; 8; 9; 9 ];
+  List.iter empty [assert_s; !assert_d1; !assert_d2; !assert_d3]
       
-let test_switch1 () =         (* dynamic creation depends on triggering prim. *)
+let test_esswitch1 () =     
   let ex, send_x = E.create () in
   let x = S.hold 0 ex in
   let dcount = ref 0 in 
@@ -693,13 +762,38 @@ let test_switch1 () =         (* dynamic creation depends on triggering prim. *)
     d
   in
   let change x = if x mod 3 = 0 then Some (dyn x) else None in 
-  let s = S.switch x (E.fmap change (S.changes x)) in 
+  let s = esswitch x (E.fmap change (S.changes x)) in 
   let assert_s = vals s [0; 1; 2; 9; 12; 15; 36; 42; 48; 81 ] in
   Gc.full_major ();
   List.iter send_x [1; 1; 2; 3; 3; 4; 5; 6; 6; 7; 8; 9; 9 ];
   List.iter empty [assert_s; !assert_d1; !assert_d2; !assert_d3]
 
 let test_switch2 () =                           (* test_switch1 + high rank. *)
+  let x, set_x = S.create 0 in
+  let high_x = high_s x in
+  let dcount = ref 0 in 
+  let assert_d1 = assert_s_stub 0 in 
+  let assert_d2 = assert_s_stub 0 in 
+  let assert_d3 = assert_s_stub 0 in 
+  let dyn v = 
+    let d = S.map (fun x -> v * x) high_x in
+    begin match !dcount with 
+    | 0 -> assert_d1 := vals d [9; 12; 15; 18; 21; 24; 27]
+    | 1 -> assert_d2 := vals d [36; 42; 48; 54]
+    | 2 -> assert_d3 := vals d [81]
+    | _ -> assert false 
+    end;
+    incr dcount;
+    d
+  in
+  let change x = if x mod 3 = 0 && x <> 0 then Some (dyn x) else None in 
+  let s = S.switch (S.fmap change x x) in 
+  let assert_s = vals s [0; 1; 2; 9; 12; 15; 36; 42; 48; 81 ] in
+  Gc.full_major ();
+  List.iter set_x [1; 1; 2; 3; 3; 4; 5; 6; 6; 7; 8; 9; 9 ];
+  List.iter empty [assert_s; !assert_d1; !assert_d2; !assert_d3]
+
+let test_esswitch2 () =                       (* test_esswitch1 + high rank. *)
   let ex, send_x = E.create () in
   let x = S.hold 0 ex in 
   let high_x = high_s x in
@@ -719,13 +813,42 @@ let test_switch2 () =                           (* test_switch1 + high rank. *)
     d
   in
   let change x = if x mod 3 = 0 then Some (dyn x) else None in 
-  let s = S.switch x (E.fmap change (S.changes x)) in 
+  let s = esswitch x (E.fmap change (S.changes x)) in 
   let assert_s = vals s [0; 1; 2; 9; 12; 15; 36; 42; 48; 81 ] in
   Gc.full_major ();
   List.iter send_x [1; 1; 2; 2; 3; 3; 4; 4; 5; 5; 6; 6; 7; 7; 8; 8; 9; 9];
   List.iter empty [assert_s; !assert_d1; !assert_d2; !assert_d3]
 
-let test_switch3 () = (* dynamic creation does not depend on triggering prim. *)
+let test_switch3 () = (* dynamic creation does not depend on triggering 
+                           prim. *)
+  let x, set_x = S.create 0 in 
+  let y, set_y = S.create 0 in
+  let dcount = ref 0 in 
+  let assert_d1 = assert_s_stub 0 in 
+  let assert_d2 = assert_s_stub 0 in
+  let assert_d3 = assert_s_stub 0 in
+  let dyn v = 
+    let d = S.map (fun y -> v * y) y in
+    begin match !dcount with 
+    | 0 -> assert_d1 := vals d [6; 3; 6; 3; 6]
+    | 1 -> assert_d2 := vals d [12; 6; 12]
+    | 2 -> assert_d3 := vals d [18]
+    | _ -> assert false 
+    end;
+    incr dcount;
+    d
+  in
+  let change x = if x mod 3 = 0 && x <> 0 then Some (dyn x) else None in 
+  let s = S.switch (S.fmap change y x) in
+  let assert_s = vals s [0; 1; 2; 6; 3; 6; 12; 6; 12; 18] in
+  Gc.full_major ();
+  List.iter set_y [1; 1; 2; 2]; List.iter set_x [1; 1; 2; 2; 3; 3];
+  List.iter set_y [1; 1; 2; 2]; List.iter set_x [4; 4; 5; 5; 6; 6];
+  List.iter set_y [1; 1; 2; 2]; List.iter set_x [7; 7; 8; 8; 9; 9];
+  List.iter empty [assert_s; !assert_d1; !assert_d2; !assert_d3]
+
+let test_esswitch3 () = (* dynamic creation does not depend on triggering 
+                           prim. *)
   let ex, send_x = E.create () in 
   let ey, send_y = E.create () in
   let x = S.hold 0 ex in
@@ -746,7 +869,7 @@ let test_switch3 () = (* dynamic creation does not depend on triggering prim. *)
     d
   in
   let change x = if x mod 3 = 0 then Some (dyn x) else None in 
-  let s = S.switch y (E.fmap change (S.changes x)) in
+  let s = esswitch y (E.fmap change (S.changes x)) in
   let assert_s = vals s [0; 1; 2; 6; 3; 6; 12; 6; 12; 18] in
   Gc.full_major ();
   List.iter send_y [1; 1; 2; 2]; List.iter send_x [1; 1; 2; 2; 3; 3];
@@ -755,6 +878,33 @@ let test_switch3 () = (* dynamic creation does not depend on triggering prim. *)
   List.iter empty [assert_s; !assert_d1; !assert_d2; !assert_d3]
 
 let test_switch4 () =                          (* test_switch3 + high rank. *)
+  let x, set_x = S.create 0 in 
+  let y, set_y = S.create 0 in
+  let dcount = ref 0 in 
+  let assert_d1 = assert_s_stub 0 in 
+  let assert_d2 = assert_s_stub 0 in
+  let assert_d3 = assert_s_stub 0 in
+  let dyn v = 
+    let d = S.map (fun y -> v * y) (high_s y) in
+    begin match !dcount with 
+    | 0 -> assert_d1 := vals d [6; 3; 6; 3; 6]
+    | 1 -> assert_d2 := vals d [12; 6; 12]
+    | 2 -> assert_d3 := vals d [18]
+    | _ -> assert false 
+    end;
+    incr dcount;
+    d
+  in
+  let change x = if x mod 3 = 0 && x <> 0 then Some (dyn x) else None in 
+  let s = S.switch (S.fmap change y x) in
+  let assert_s = vals s [0; 1; 2; 6; 3; 6; 12; 6; 12; 18] in
+  Gc.full_major ();
+  List.iter set_y [1; 1; 2; 2]; List.iter set_x [1; 1; 2; 2; 3; 3];
+  List.iter set_y [1; 1; 2; 2]; List.iter set_x [4; 4; 5; 5; 6; 6];
+  List.iter set_y [1; 1; 2; 2]; List.iter set_x [7; 7; 8; 8; 9; 9];
+  List.iter empty [assert_s; !assert_d1; !assert_d2; !assert_d3]
+
+let test_esswitch4 () =                       (* test_esswitch3 + high rank. *)
   let ex, set_x = E.create () in 
   let ey, set_y = E.create () in
   let x = S.hold 0 ex in
@@ -775,7 +925,7 @@ let test_switch4 () =                          (* test_switch3 + high rank. *)
     d
   in
   let change x = if x mod 3 = 0 then Some (dyn x) else None in 
-  let s = S.switch y (E.fmap change (S.changes x)) in
+  let s = esswitch y (E.fmap change (S.changes x)) in
   let assert_s = vals s [0; 1; 2; 6; 3; 6; 12; 6; 12; 18] in
   Gc.full_major ();
   List.iter set_y [1; 1; 2; 2]; List.iter set_x [1; 1; 2; 2; 3; 3];
@@ -923,11 +1073,18 @@ let test_signals () =
   test_fold ();
   test_merge ();
   test_switch ();
+  test_esswitch ();
+  test_switch_const ();
+  test_esswitch_const ();
   test_switch_const ();
   test_switch1 ();
+  test_esswitch1 ();
   test_switch2 ();
-  test_switch3 (); 
+  test_esswitch2 ();
+  test_switch3 ();
+  test_esswitch3 (); 
   test_switch4 ();
+  test_esswitch4 ();
   test_fix ();
   test_fix' ();
   test_lifters ();

@@ -1059,51 +1059,56 @@ module S = struct
     List.iter dep sl;
     signal m' p u
       
-  let switch ?(eq = ( = )) s = function
-  | Never -> s
-  | Emut ms -> 
-      let r = match s with 
-      | Smut m -> rsucc2 ms.enode m.snode | Const v -> rsucc ms.enode 
-      in
+  let switch ?(eq = ( = )) = function
+  | Const s -> s
+  | Smut mss -> 
+      let r = rsucc mss.snode in
       let m' = smut r eq in 
-      let src = ref s in                         (* current signal source. *)
+      let src = ref (sval mss) in                   (* current signal source. *)
       let rec p () = match !src with
-      | Smut m -> [ m.snode; ms.enode] | Const _ -> [ ms.enode ]
-      and u c = match !(ms.ev) with
-      | None -> 
-          begin match !src with                          (* src supdated. *)
-          | Smut m -> supdate (sval m) m' c | Const _ -> () (* init only. *)
-          end
-      | Some s -> 
+      | Smut m -> [ mss.snode; m.snode] | Const _ -> [ mss.snode ]
+      and u c = 
+        if (sval mss) == !src then (* ss didn't change, !src did *)
           begin match !src with 
-          | Smut m -> Node.rem_dep m.snode m'.snode | Const _ -> ()
-          end;
-          src := s;
-          match s with 
-          | Const v -> 
-              ignore (Node.update_rank m'.snode (rsucc ms.enode));
-              supdate v m' c
-          | Smut m ->
-              Node.add_dep m.snode m'.snode;
-              if Node.update_rank m'.snode (rsucc2 m.snode ms.enode) then
-                begin 
-                  (* Rank increased because of m. Thus m may still
-                     update and we need to reschedule. Next time we 
-                     will be in the other branch. *)
-                  Step.allow_reschedule m'.snode;
-                  Step.rebuild c;
-                  Step.add c m'.snode
-                end
-              else
-              (* No rank increase. m already updated if needed. 
-                 No need to reschedule and rebuild the queue. *)
-              supdate (sval m) m' c
+          | Smut m -> supdate (sval m) m' c
+          | Const _ -> () (* init only. *)
+          end 
+        else (* ss changed *)
+          begin 
+            begin match !src with 
+            | Smut m -> Node.rem_dep m.snode m'.snode 
+            | Const _ -> ()
+            end;
+            let new_src = sval mss in 
+            src := new_src; 
+            match new_src with 
+            | Const v -> 
+                ignore (Node.update_rank m'.snode (rsucc mss.snode)); 
+                supdate v m' c
+            | Smut m -> 
+                Node.add_dep m.snode m'.snode; 
+                if Node.update_rank m'.snode (rsucc2 m.snode mss.snode) then
+                  begin 
+                    (* Rank increased because of m. Thus m may still
+                       update and we need to reschedule. Next time we 
+                       will be in the other branch. *)
+                    Step.allow_reschedule m'.snode;
+                    Step.rebuild c;
+                    Step.add c m'.snode
+                  end
+                else
+                (* No rank increase. m already updated if needed. 
+                   No need to reschedule and rebuild the queue. *)
+                supdate (sval m) m' c
+          end
       in
-      E.add_dep ms m'.snode;
-      match s with 
+      Node.add_dep mss.snode m'.snode; 
+      match !src with 
       | Const i -> signal ~i m' p u
       | Smut m -> Node.add_dep m.snode m'.snode; signal m' p u
-            
+   
+  let bind ?eq s sf = switch ?eq (map sf s)
+
   let fix ?(eq = ( = )) i f = 
     let update_delayed n p u nl = 
       Node.bind n p u;
@@ -1338,7 +1343,8 @@ module S = struct
     val accum : ('a v -> 'a v) event -> 'a v -> 'a v signal 
     val fold : ('a v -> 'b -> 'a v) -> 'a v -> 'b event -> 'a v signal
     val merge : ('a v -> 'b -> 'a v) -> 'a v -> 'b signal list -> 'a v signal
-    val switch : 'a v signal -> 'a v signal event -> 'a v signal
+    val switch : 'a v signal signal -> 'a v signal
+    val bind : 'b signal -> ('b -> 'a v signal) -> 'a v signal
     val fix : 'a v -> ('a v signal -> 'a v signal * 'b) -> 'b
     val l1 : ('a -> 'b v) -> ('a signal -> 'b v signal)
     val l2 : ('a -> 'b -> 'c v) -> ('a signal -> 'b signal -> 'c v signal) 
@@ -1370,6 +1376,7 @@ module S = struct
     let fold f i = fold ~eq f i
     let merge f a sl = merge ~eq f a sl
     let switch s = switch ~eq s
+    let bind s sf = bind ~eq s sf
     let fix f = fix ~eq f
     let l1 = map 
     let l2 f s s' = l2 ~eq f s s'

@@ -217,7 +217,7 @@ end = struct
     let p = 
       let pos p0 = S.fold V2.add p0 dp in
       let adjust (_, pc) = pos pc in                 (* visually sufficient. *)
-      S.switch (pos p0) (E.map adjust collisions)
+      S.switch (S.hold ~eq:( == ) (pos p0) (E.map adjust collisions))
     in
     moving_rect p size, dp
  

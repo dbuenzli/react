@@ -382,7 +382,6 @@ module S : sig
          where t' is the greatest t' < t with \[[c]\]{_t'} [= true].}
       {- \[[when_ c i s]\]{_t} [=] [i] otherwise.}} *)
       
-
   val dismiss : ?eq:('a -> 'a -> bool) -> 'b event -> 'a -> 'a signal -> 
     'a signal 
   (** [dismiss c i s] is the signal [s] except changes when [c] occurs
@@ -413,15 +412,14 @@ module S : sig
     \[[merge f a sl]\]{_ t} 
     [= List.fold_left f a (List.map] \[\]{_t}[ sl)]. *)
 
-  val switch : ?eq:('a -> 'a -> bool) -> 'a signal -> 'a signal event -> 
-    'a signal
-  (** [switch s es] is [s] until there is an 
-      occurrence [s'] on [es], [s'] is then used 
-      until there is a new occurrence on [es], etc.. 
-      {ul
-      {- \[[switch s es]\]{_ t} [=] \[[s]\]{_t} if \[[es]\]{_<=t} [= None].}
-      {- \[[switch s es]\]{_ t} [=] \[[s']\]{_t} if \[[es]\]{_<=t} 
-    [= Some s'].}} *)
+  val switch : ?eq:('a -> 'a -> bool) -> 'a signal signal -> 'a signal 
+  (** [switch ss] is the inner signal of [ss]. 
+      {ul 
+      {- \[[switch ss]\]{_ t} [=] \[\[[ss]\]{_t}\]{_t}.}} *)
+
+  val bind : ?eq:('b -> 'b -> bool) -> 'a signal -> ('a -> 'b signal) -> 
+    'b signal 
+  (** [bind s sf] is [switch (map sf s)]. *)
 
   val fix : ?eq:('a -> 'a -> bool) -> 'a -> ('a signal -> 'a signal * 'b) -> 'b
   (** [fix i sf] allow to refer to the value a signal had an
@@ -600,7 +598,8 @@ module S : sig
     val accum : ('a v -> 'a v) event -> 'a v -> 'a v signal 
     val fold : ('a v -> 'b -> 'a v) -> 'a v -> 'b event -> 'a v signal
     val merge : ('a v -> 'b -> 'a v) -> 'a v -> 'b signal list -> 'a v signal
-    val switch : 'a v signal -> 'a v signal event -> 'a v signal
+    val switch : 'a v signal signal -> 'a v signal
+    val bind : 'b signal -> ('b -> 'a v signal) -> 'a v signal
     val fix : 'a v -> ('a v signal -> 'a v signal * 'b) -> 'b
     val l1 : ('a -> 'b v) -> ('a signal -> 'b v signal)
     val l2 : ('a -> 'b -> 'c v) -> ('a signal -> 'b signal -> 'c v signal) 
