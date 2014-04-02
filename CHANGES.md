@@ -1,5 +1,5 @@
-v0.9.5 YYYY-MM-DD Loc
---------------------------
+v1.0.0 2014-04-02 La Forclaz (VS)
+---------------------------------
 
 - OPAM friendly workflow and drop OASIS support.
 - Add `S.bind`.

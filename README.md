@@ -37,8 +37,7 @@ distribution.
 ## Sample programs
 
 If you installed React with `opam` sample programs are located in
-the directory `opam config var react:doc`. These programs define
-the command line of some classic programs.
+the directory `opam config var react:doc`.
 
 In the distribution sample programs are located in the `test`
 directory of the distribution. They can be built with:
