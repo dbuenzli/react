@@ -419,7 +419,7 @@ module S : sig
 
   val bind : ?eq:('b -> 'b -> bool) -> 'a signal -> ('a -> 'b signal) -> 
     'b signal 
-  (** [bind s sf] is [switch (map sf s)]. *)
+  (** [bind s sf] is [switch (map ~eq:( == ) sf s)]. *)
 
   val fix : ?eq:('a -> 'a -> bool) -> 'a -> ('a signal -> 'a signal * 'b) -> 'b
   (** [fix i sf] allow to refer to the value a signal had an

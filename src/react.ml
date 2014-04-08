@@ -1107,7 +1107,7 @@ module S = struct
       | Const i -> signal ~i m' p u
       | Smut m -> Node.add_dep m.snode m'.snode; signal m' p u
    
-  let bind ?eq s sf = switch ?eq (map sf s)
+  let bind ?eq s sf = switch ?eq (map ~eq:( == ) sf s)
 
   let fix ?(eq = ( = )) i f = 
     let update_delayed n p u nl = 

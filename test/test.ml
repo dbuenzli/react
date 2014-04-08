@@ -933,6 +933,22 @@ let test_esswitch4 () =                       (* test_esswitch3 + high rank. *)
   List.iter set_y [1; 1; 2; 2]; List.iter set_x [7; 7; 8; 8; 9; 9];
   List.iter empty [assert_s; !assert_d1; !assert_d2; !assert_d3]
 
+let test_bind () = 
+  let e, set_e = E.create () in
+  let a = S.hold 0 e in 
+  let b = S.hold 1 e in 
+  let s, set_s = S.create true in
+  let next = function 
+  | true -> b
+  | false -> a
+  in
+  let f = S.bind s next in
+  let assert_bind = vals f [1; 0; 3;] in
+  set_s false;
+  set_e 3;
+  set_s true;
+  List.iter empty [assert_bind]
+  
 let test_fix () =
   let s, set_s = S.create 0 in
   let history s = 
@@ -1085,6 +1101,7 @@ let test_signals () =
   test_esswitch3 (); 
   test_switch4 ();
   test_esswitch4 ();
+  test_bind ();
   test_fix ();
   test_fix' ();
   test_lifters ();
