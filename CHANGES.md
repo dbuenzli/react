@@ -1,3 +1,9 @@
+v1.0.1 2014-04-21 La Forclaz (VS)
+---------------------------------
+
+- Fix `S.bind`. 
+- Use package builder topkg for distribution.
+
 v1.0.0 2014-04-02 La Forclaz (VS)
 ---------------------------------
 

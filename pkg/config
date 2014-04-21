@@ -1,3 +1,0 @@
-NAME=react
-VERSION=`git describe master | sed "s/^.//"`
-MAINTAINER="Daniel Bünzli <daniel.buenzl i\\\@erratique.ch>"

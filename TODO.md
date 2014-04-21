@@ -4,7 +4,11 @@
 ```ocaml
 E.Option.some : 'a option event -> 'a event 
 (** [some e] is [E.fmap (fun v -> v) e] *)
+
+S.Option.some : 'a -> 'a option signal -> 'a signal
 ```
+
+
 
 # New signal combinators. 
 
@@ -19,3 +23,6 @@ S.freeze : 'a signal -> 'a signal
 
 See if we can return a const and if what happens when used with 
 bind and/or provide an alternative S.bind for bootstraping.
+
+
+
