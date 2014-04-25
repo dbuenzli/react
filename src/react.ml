@@ -1251,6 +1251,9 @@ module S = struct
   end
   
   module Int = struct
+    let zero = Const 0
+    let one = Const 1
+    let minus_one = Const (-1)
     let eq : int -> int -> bool = ( = )
     let ( ~- ) s = l1 ~eq ( ~- ) s
     let succ s = l1 ~eq succ s
@@ -1272,6 +1275,9 @@ module S = struct
   end
   
   module Float = struct
+    let zero = Const 0. 
+    let one = Const 1. 
+    let minus_one = Const (-1.)
     let eq : float -> float -> bool = ( = )
     let ( ~-. ) s = l1 ~eq ( ~-. ) s
     let ( +. ) s s' = l2 ~eq ( +. ) s s'

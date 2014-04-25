@@ -495,14 +495,17 @@ module S : sig
       operators. *)
 
   module Bool : sig
-    val one : bool signal 
     val zero : bool signal
+    val one : bool signal 
     val not : bool signal -> bool signal
     val ( && ) : bool signal -> bool signal -> bool signal
     val ( || ) : bool signal -> bool signal -> bool signal
   end
   
   module Int : sig
+    val zero : int signal
+    val one : int signal 
+    val minus_one : int signal
     val ( ~- ) : int signal -> int signal
     val succ : int signal -> int signal
     val pred : int signal -> int signal
@@ -523,6 +526,9 @@ module S : sig
   end
 
   module Float : sig
+    val zero : float signal
+    val one : float signal 
+    val minus_one : float signal
     val ( ~-. ) : float signal -> float signal
     val ( +. ) : float signal -> float signal -> float signal
     val ( -. ) : float signal -> float signal -> float signal
