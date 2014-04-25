@@ -487,6 +487,8 @@ module S : sig
       operators. *)
 
   module Bool : sig
+    val one : bool signal 
+    val zero : bool signal
     val not : bool signal -> bool signal
     val ( && ) : bool signal -> bool signal -> bool signal
     val ( || ) : bool signal -> bool signal -> bool signal

@@ -1238,6 +1238,8 @@ module S = struct
   | s0, s1, s2, s3, s4, s5 -> app ~eq (l5 ~eq:( == ) f s0 s1 s2 s3 s4) s5 
                                 
   module Bool = struct
+    let one = Const true
+    let zero = Const false
     let eq : bool -> bool -> bool = ( = ) 
     let not s = l1 ~eq not s
     let ( && ) s s' = l2 ~eq ( && ) s s' 
