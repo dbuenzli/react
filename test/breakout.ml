@@ -403,9 +403,9 @@ end = struct
     let run = S.hold false (E.once (E.stamp (key ' ') true)) in
     let moves =
       let move = function 'a' -> Some `Left | 'd' -> Some `Right | _ -> None in
-      E.when_ run (E.fmap move Input.key)
+      E.on run (E.fmap move Input.key)
     in
-    let dt = E.when_ run (E.diff ( -. ) Input.time) in 
+    let dt = E.on run (E.diff ( -. ) Input.time) in 
     let g = Game.create Draw.frame dt moves in
     let outcome = Game.outcome g in 
     let sound = E.map Draw.beep (Game.collisions g) in

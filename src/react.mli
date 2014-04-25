@@ -150,13 +150,15 @@ module E : sig
       [eq v v' = false].}
       {- \[[changes eq e]\]{_t} [= None] otherwise.}} *)
 
-  val when_ : bool signal -> 'a event -> 'a event
-  (** [when_ c e] is the occurrences of [e] when [c] is [true]. 
+  val on : bool signal -> 'a event -> 'a event
+  (** [on c e] is the occurrences of [e] when [c] is [true]. 
       {ul 
-      {- \[[when_ c e]\]{_t} [= Some v] 
+      {- \[[on c e]\]{_t} [= Some v] 
          if \[[c]\]{_t} [= true] and \[[e]\]{_t} [= Some v].}
-      {- \[[when_ c e]\]{_t} [= None] otherwise.}} *)
+      {- \[[on c e]\]{_t} [= None] otherwise.}} *)
 
+  val when_ : bool signal -> 'a event -> 'a event
+  (** @deprecated Use {!on}. *)
 
   val dismiss : 'b event -> 'a event -> 'a event 
   (** [dismiss c e] is the occurences of [e] except the ones when [c] occurs. 
@@ -317,7 +319,6 @@ module S : sig
       {- \[[hold i e]\]{_t} [= i] if \[[e]\]{_<=t} [= None]}
       {- \[[hold i e]\]{_t} [= v] if \[[e]\]{_<=t} [= Some v]}} *)
 
-
  (** {1:tr Transforming and filtering} *)
 
   val app : ?eq:('b -> 'b -> bool) -> ('a -> 'b) signal -> 'a signal -> 
@@ -371,16 +372,20 @@ module S : sig
          and  \[[s]\]{_t} [= sv].}
       {- \[[sample e s]\]{_t} [= None] otherwise.}} *)      
 
-  val when_ : ?eq:('a -> 'a -> bool) -> bool signal -> 'a -> 'a signal -> 
+  val on : ?eq:('a -> 'a -> bool) -> bool signal -> 'a -> 'a signal -> 
     'a signal
-  (** [when_ c i s] is the signal [s] whenever [c] is [true].
+  (** [on c i s] is the signal [s] whenever [c] is [true].
       When [c] is [false] it holds the last value [s] had when
       [c] was the last time [true] or [i] if it never was.
       {ul
-      {- \[[when_ c i s]\]{_t} [=] \[[s]\]{_t} if \[[c]\]{_t} [= true]}
-      {- \[[when_ c i s]\]{_t} [=] \[[s]\]{_t'} if \[[c]\]{_t} [= false] 
+      {- \[[on c i s]\]{_t} [=] \[[s]\]{_t} if \[[c]\]{_t} [= true]}
+      {- \[[on c i s]\]{_t} [=] \[[s]\]{_t'} if \[[c]\]{_t} [= false] 
          where t' is the greatest t' < t with \[[c]\]{_t'} [= true].}
-      {- \[[when_ c i s]\]{_t} [=] [i] otherwise.}} *)
+      {- \[[on c i s]\]{_t} [=] [i] otherwise.}} *)
+
+  val when_ : ?eq:('a -> 'a -> bool) -> bool signal -> 'a -> 'a signal -> 
+    'a signal
+  (** @deprecated Use {!on}. *)
       
   val dismiss : ?eq:('a -> 'a -> bool) -> 'b event -> 'a -> 'a signal -> 
     'a signal 

@@ -225,7 +225,7 @@ type 'a signal = Const of 'a | Smut of 'a smut
      happen in the same step and thus the depency addition occurs at
      the end of the step (S.diff, S.changes) or the event cares only
      about having an up to date value if some other event occurs
-     (S.sample, E.when_) in the same step and the rank of n ensures
+     (S.sample, E.on) in the same step and the rank of n ensures
      this.
 
   2. If n is the node of a new signal then n cares only about having
@@ -607,7 +607,7 @@ module E = struct
       add_dep m m'.enode;
       event m' p u
         
-  let when_ c = function
+  let on c = function
   | Never -> Never
   | Emut m as e -> 
       match c with
@@ -623,7 +623,9 @@ module E = struct
           add_dep m m'.enode;
           Node.add_dep mc.snode m'.enode;
           event m' p u 
-            
+
+  let when_ = on
+    
   let dismiss c = function
   | Never -> Never
   | Emut m as e -> 
@@ -980,7 +982,7 @@ module S = struct
           Node.add_dep ms.snode m'.enode;
           event m' p u
             
-  let when_ ?(eq = ( = )) c i s = match c with
+  let on ?(eq = ( = )) c i s = match c with
   | Const true -> s
   | Const false -> Const i 
   | Smut mc -> 
@@ -998,7 +1000,9 @@ module S = struct
           Node.add_dep mc.snode m'.snode;
           Node.add_dep ms.snode m'.snode;
           signal ~i m' p u
-            
+
+  let when_ = on
+    
   let dismiss ?(eq = ( = )) c i s = match c with 
   | Never -> s
   | Emut mc -> 

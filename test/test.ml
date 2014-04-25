@@ -181,18 +181,18 @@ let test_dismiss () =
   List.iter empty [assert_z; !assert_dz];
   keep_eref create_dyn
 
-let test_when () = 
+let test_on () = 
   let e, send_e = E.create () in 
   let s = S.hold 0 e in 
   let c = S.map (fun x -> x mod 2 = 0) s in
-  let w = E.when_ c e in 
+  let w = E.on c e in 
   let ovals = [2; 4; 4; 6; 4] in
   let assert_w = occs w ovals in
   let assert_dw = assert_e_stub () in
   let assert_dhw = assert_e_stub () in
   let dyn () = 
-    let dw = E.when_ c e in 
-    let dhw = E.when_ (high_s c) (high_e e) in
+    let dw = E.on c e in 
+    let dhw = E.on (high_s c) (high_e e) in
     assert_dw := occs dw ovals;
     assert_dhw := occs dhw ovals
   in
@@ -346,7 +346,7 @@ let test_events () =
   test_app ();
   test_map_stamp_filter_fmap ();
   test_diff_changes ();
-  test_when ();
+  test_on ();
   test_dismiss ();
   test_until ();
   test_accum ();
@@ -529,12 +529,12 @@ let test_sample () =
   List.iter empty [assert_sam; !assert_dsam; !assert_dhsam];
   keep_sref create_dyn
 
-let test_when () =
+let test_on () =
   let s, set_s = S.create 0 in 
   let ce = S.map (fun x -> x mod 2 = 0) s in  
   let co = S.map (fun x -> x mod 2 <> 0) s in
-  let se = S.when_ ce 42 s in 
-  let so = S.when_ co 56 s in 
+  let se = S.on ce 42 s in 
+  let so = S.on co 56 s in 
   let assert_se = vals se [ 0; 2; 4; 6; 4 ] in
   let assert_so = vals so [ 56; 1; 3; 1; 3 ] in
   let assert_dse = assert_s_stub 0 in
@@ -542,10 +542,10 @@ let test_when () =
   let assert_dso = assert_s_stub 0 in
   let assert_dhso = assert_s_stub 0 in
   let dyn () = 
-    let dse = S.when_ ce 42 s in
-    let dhse = S.when_ ce 42 (high_s s) in
-    let dso = S.when_ co 56 s in
-    let dhso = S.when_ co 56 (high_s s) in
+    let dse = S.on ce 42 s in
+    let dhse = S.on ce 42 (high_s s) in
+    let dso = S.on co 56 s in
+    let dhso = S.on co 56 (high_s s) in
     assert_dse := vals dse [6; 4];
     assert_dhse := vals dhse [6; 4];
     assert_dso := vals dso [56; 1; 3];
@@ -1083,7 +1083,7 @@ let test_signals () =
   test_map_filter_fmap ();
   test_diff_changes ();
   test_sample ();
-  test_when ();
+  test_on ();
   test_dismiss ();
   test_accum ();
   test_fold ();
@@ -1146,8 +1146,8 @@ let test_simultaneous () =
   let assert_s1_value = occs s1_value [ 3 ] in
   let dismiss = S.dismiss e1 1 s1 in
   let assert_dismiss = vals dismiss [ 99 ] in
-  let when_ = S.when_ (S.map (( = ) 3) s1) 0 s2 in 
-  let assert_when_ = vals when_ [0; 4] in
+  let on = S.on (S.map (( = ) 3) s1) 0 s2 in 
+  let assert_on_ = vals on [0; 4] in
   let step = Step.create () in 
   send1 ~step 1; 
   send2 ~step 2; 
@@ -1158,7 +1158,7 @@ let test_simultaneous () =
   empty assert_merge;
   empty assert_s1_value;
   empty assert_dismiss;
-  empty assert_when_;
+  empty assert_on_;
   ()
 
 let test_multistep () = 
