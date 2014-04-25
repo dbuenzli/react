@@ -2,9 +2,6 @@
 # New event combinators 
 
 ```ocaml
-E.Option.some : 'a option event -> 'a event 
-(** [some e] is [E.fmap (fun v -> v) e] *)
-
 S.Option.some : 'a -> 'a option signal -> 'a signal
 ```
 

@@ -773,6 +773,10 @@ module E = struct
         Node.bind m.enode p u;
         add_dep m' m.enode;
         r
+
+  module Option = struct
+    let some e = fmap (fun v -> v) e
+  end
 end
 
 module S = struct

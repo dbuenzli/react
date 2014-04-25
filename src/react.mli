@@ -238,6 +238,14 @@ module E : sig
 
       {b Raises.} [Invalid_argument] if [e'] is directly a delayed event (i.e. 
       an event given to a fixing function). *)
+
+  (** {1 Pervasives support} *) 
+
+  (** Events with option occurences. *) 
+  module Option : sig
+    val some : 'a option event -> 'a event 
+    (** [some e] is [fmap (fun v -> v) e]. *) 
+  end
 end
 
 (** Signal combinators. 
