@@ -570,6 +570,14 @@ module S : sig
     val snd : ?eq:('a -> 'a -> bool) -> ('b * 'a) signal -> 'a signal
   end
 
+  module Option : sig
+    val none : 'a option signal
+    (** [none] is [S.const None]. *)
+
+    val some : ?eq:('a -> 'a -> bool) -> 'a -> 'a option signal -> 'a signal
+    (** [some i s] is [fmap (fun v -> v) i s]. *)
+  end
+
   module Compare : sig
     val ( = ) : 'a signal -> 'a signal -> bool signal
     val ( <> ) : 'a signal -> 'a signal -> bool signal

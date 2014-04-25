@@ -1,12 +1,3 @@
-
-# New event combinators 
-
-```ocaml
-S.Option.some : 'a -> 'a option signal -> 'a signal
-```
-
-
-
 # New signal combinators. 
 
 To avoid uses of S.value we need better ways to access a 

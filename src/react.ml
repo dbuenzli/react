@@ -1318,7 +1318,12 @@ module S = struct
     let fst ?eq s = l1 ?eq fst s
     let snd ?eq s = l1 ?eq snd s
   end
-  
+
+  module Option = struct
+    let none = Const None
+    let some ?eq i s = fmap ?eq (fun v -> v) i s
+  end
+
   module Compare = struct 
     let eq = Bool.eq 
     let ( = ) s s' = l2 ~eq ( = ) s s'
