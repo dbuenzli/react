@@ -12,6 +12,8 @@ let err_retain_cst_sig = "constant signals cannot retain a closure"
 let err_step_executed = "step already executed" 
 let err_event_scheduled = "event already scheduled on a step"
 let err_signal_scheduled = "signal already scheduled on a step"
+let err_is_never = "can't apply to never event" 
+let err_is_const = "can't apply to constant signal"
   
 module Wa = struct                  
   type 'a t = { mutable arr : 'a Weak.t; mutable len : int }
@@ -453,6 +455,10 @@ module E = struct
       m.enode.stamp <- c;
       eupdate v m c;
       Step.execute c
+
+  let rank = function 
+  | Never -> invalid_arg err_is_never 
+  | Emut m -> m.enode.rank 
 
   (* Basics *)
 
@@ -941,7 +947,11 @@ module S = struct
         m.sv <- Some v; 
         Step.add_deps c m.snode;
         Step.execute c
-      
+
+  let rank = function 
+  | Const _ -> invalid_arg err_is_const 
+  | Smut m -> m.snode.rank       
+
   (* Basics *)
       
   let const v = Const v

@@ -62,6 +62,10 @@ module E : sig
 
       {b Raises.} [Invalid_argument] on {!E.never}. *)
 
+  (**/**)
+  val rank : 'a event -> int                                               
+  (**/**) 
+
   val stop : ?strong:bool -> 'a event -> unit
   (** [stop e] stops [e] from occuring. It conceptually becomes
       {!never} and cannot be restarted. Allows to 
@@ -319,6 +323,7 @@ module S : sig
       {b Raises.} [Invalid_argument] on constant signals. *)
 
   (**/**)
+  val rank : 'a signal -> int                                               
   val eq_fun : 'a signal -> ('a -> 'a -> bool) option
   (**/**)
 
