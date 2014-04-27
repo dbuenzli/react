@@ -1208,7 +1208,41 @@ let test_jake_heap_bug () =
   set_a 2;
   empty a_h
 
-let test_misc () = test_jake_heap_bug ()
+let test_sswitch_init_rank_bug () = 
+  let enabled, set_enabled = S.create true in
+(* let enabled = S.const true *)
+  let pos, set_pos = S.create () in 
+  let down, send_down = E.create () in 
+  let up, send_up = E.create () in 
+  let hover enabled = match enabled with 
+  | true -> S.map (fun a -> true) pos 
+  | false -> S.Bool.zero
+  in
+  let used hover enabled = match enabled with 
+  | true -> 
+      let start = E.set_id "start" (E.stamp (E.on hover down) true) in 
+      let stop = E.set_id "stop" (E.stamp up false) in 
+      let accum = E.set_id "select" (E.select [ start; stop ]) in
+      let s = S.set_id "used_true" (S.hold false accum) in 
+      s
+  | false -> S.Bool.zero
+  in
+  let hover = S.set_id "hover" (S.bind enabled hover) in
+  let used =
+    let s = S.switch (S.map ~eq:( == ) (used hover) enabled) in
+    S.set_id "used" s
+  in
+  let activates = E.set_id "activates" (S.changes used) in 
+  let activates' = (E.map (fun _ -> (fun _ -> ())) activates) in 
+  let actuate = (E.app activates' up) in
+  let actuate_assert = occs actuate [()] in
+  send_down (); send_up (); empty actuate_assert
+
+
+let test_misc () = 
+  test_jake_heap_bug (); 
+  test_sswitch_init_rank_bug ()
+    
   
 let main () = 
   test_events ();

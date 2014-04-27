@@ -1070,9 +1070,11 @@ module S = struct
   let switch ?(eq = ( = )) = function
   | Const s -> s
   | Smut mss -> 
-      let r = rsucc mss.snode in
-      let m' = smut r eq in 
       let src = ref (sval mss) in                   (* current signal source. *)
+      let r = match !src with 
+      | Smut ms -> rsucc2 ms.snode mss.snode | Const _ -> rsucc mss.snode
+      in
+      let m' = smut r eq in
       let rec p () = match !src with
       | Smut m -> [ mss.snode; m.snode] | Const _ -> [ mss.snode ]
       and u c = 
