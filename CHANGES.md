@@ -1,3 +1,15 @@
+v1.1.0 2014-04-27 La Forclaz (VS)
+---------------------------------
+
+- Fix `S.switch` rank's initialisation.
+- Add `E.l{1,2,3,4,5,6}`, lifting combinators on events.
+- Add `E.Option.{some,value}`.
+- Add `S.{Float,Int}.{zero,one,minus_one}`. 
+- Add `S.Bool.{zero,one}`.
+- Add `S.Option.{none,some,value}`.
+- Add `{S,E}.on` equivalent to `{S,E}.when_`.
+- Deprecate `{S,E}.when_` (syntax error prone). 
+
 v1.0.1 2014-04-21 La Forclaz (VS)
 ---------------------------------
 
