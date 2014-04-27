@@ -775,7 +775,24 @@ module E = struct
         r
 
   module Option = struct
-    let some e = fmap (fun v -> v) e
+    let some e = map (fun v -> Some v) e 
+    let value ?default e = match default with 
+    | None -> fmap (fun v -> v) e
+    | Some (Const dv) -> map (function None -> dv | Some v -> v) e
+    | Some (Smut ms) -> 
+        match e with 
+        | Never -> Never
+        | Emut m ->
+            let m' = emut (rsucc2 m.enode ms.snode) in 
+            let rec p () = [ m.enode; ms.snode ]
+            and u c = match !(m.ev) with 
+            | None -> () (* ms updated. *)
+            | Some None -> eupdate (sval ms) m' c 
+            | Some Some v -> eupdate v m' c
+            in
+            add_dep m m'.enode; 
+            Node.add_dep ms.snode m'.enode; 
+            event m' p u
   end
 end
 

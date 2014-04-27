@@ -340,6 +340,23 @@ let test_fix () =
   List.iter empty [assert_l; !assert_dl];
   keep_eref create_dyn
 
+let test_option () = 
+  let x, send_x = E.create () in 
+  let s, set_s = S.create 4 in 
+  let some = E.Option.some (S.changes s) in 
+  let e0 = E.Option.value x in 
+  let e1 = E.Option.value ~default:(S.const 2) x in 
+  let e2 = E.Option.value ~default:s x in 
+  let assert_some = occs some [ Some 42;] in 
+  let assert_e0 = occs e0 [1; 5; ] in 
+  let assert_e1 = occs e1 [1; 2; 5; 2] in 
+  let assert_e2 = occs e2 [1; 4; 5; 42] in 
+  send_x (Some 1); send_x None; set_s 42; 
+  send_x (Some 5); send_x None; 
+  empty assert_some;
+  List.iter empty [ assert_e0; assert_e1; assert_e2];
+  ()
+
 let test_events () = 
   test_no_leak ();
   test_once_drop_once ();
@@ -354,7 +371,9 @@ let test_events () =
   test_select ();
   test_merge ();
   test_switch ();
-  test_fix ()
+  test_fix (); 
+  test_option ();
+  ()
 
 (* Signal tests *)
 

@@ -243,8 +243,18 @@ module E : sig
 
   (** Events with option occurences. *) 
   module Option : sig
-    val some : 'a option event -> 'a event 
-    (** [some e] is [fmap (fun v -> v) e]. *) 
+    val some : 'a event -> 'a option event 
+    (** [some e] is [map (fun v -> Some v) e]. *) 
+
+    val value : ?default:'a signal -> 'a option event -> 'a event 
+    (** [some default e] either silences [None] occurences if [default] is
+        unspecified or replaces them by the value of [default] at the occurence
+        time.
+        {ul 
+        {- \[[value ~default e]\]{_t}[ = v] if \[[e]\]{_t} [= Some (Some v)].}
+        {- \[[value ?default:None e]\]{_t}[ = None] if \[[e]\]{_t} = [None].}
+        {- \[[value ?default:(Some s) e]\]{_t}[ = v] 
+           if \[[e]\]{_t} = [None] and \[[s]\]{_t} [= v].}} *)
   end
 end
 
