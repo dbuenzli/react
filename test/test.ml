@@ -340,6 +340,46 @@ let test_fix () =
   List.iter empty [assert_l; !assert_dl];
   keep_eref create_dyn
 
+let test_lifts () = 
+  let x1, send_x1 = E.create () in 
+  let x2, send_x2 = E.create () in 
+  let x3, send_x3 = E.create () in 
+  let x4, send_x4 = E.create () in 
+  let x5, send_x5 = E.create () in 
+  let x6, send_x6 = E.create () in 
+  let f1 a = 1 + a in
+  let f2 a0 a1 = a0 + a1 in 
+  let f3 a0 a1 a2 = a0 + a1 + a2 in 
+  let f4 a0 a1 a2 a3 = a0 + a1 + a2 + a3 in 
+  let f5 a0 a1 a2 a3 a4 = a0 + a1 + a2 + a3 + a4 in 
+  let f6 a0 a1 a2 a3 a4 a5 = a0 + a1 + a2 + a3 + a4 + a5 in 
+  let v1 = E.l1 f1 x1 in
+  let v2 = E.l2 f2 x1 x2 in
+  let v3 = E.l3 f3 x1 x2 x3 in
+  let v4 = E.l4 f4 x1 x2 x3 x4 in
+  let v5 = E.l5 f5 x1 x2 x3 x4 x5 in
+  let v6 = E.l6 f6 x1 x2 x3 x4 x5 x6 in
+  let a_v1 = occs v1 [2; 2; 2; 2; 2; 2;] in 
+  let a_v2 = occs v2 [   3; 3; 3; 3; 3;] in 
+  let a_v3 = occs v3 [      6; 6; 6; 6;] in   
+  let a_v4 = occs v4 [        10;10;10;] in 
+  let a_v5 = occs v5 [           15;15;] in 
+  let a_v6 = occs v6 [              21;] in 
+  let with_step f = 
+    let s = Step.create () in
+    f s; Step.execute s 
+  in
+  let s1 s = send_x1 ~step:s 1 in 
+  let s2 s = s1 s; send_x2 ~step:s 2 in 
+  let s3 s = s2 s; send_x3 ~step:s 3 in
+  let s4 s = s3 s; send_x4 ~step:s 4 in
+  let s5 s = s4 s; send_x5 ~step:s 5 in
+  let s6 s = s5 s; send_x6 ~step:s 6 in
+  with_step s1; with_step s2; with_step s3; 
+  with_step s4; with_step s5; with_step s6; 
+  List.iter empty [ a_v1; a_v2; a_v3; a_v4; a_v5; a_v6;]; 
+  ()
+  
 let test_option () = 
   let x, send_x = E.create () in 
   let s, set_s = S.create 4 in 
@@ -372,6 +412,7 @@ let test_events () =
   test_merge ();
   test_switch ();
   test_fix (); 
+  test_lifts (); 
   test_option ();
   ()
 

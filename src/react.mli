@@ -239,6 +239,25 @@ module E : sig
       {b Raises.} [Invalid_argument] if [e'] is directly a delayed event (i.e. 
       an event given to a fixing function). *)
 
+  (** {1 Lifting} 
+
+      Lifting combinators. For a given [n] the semantics is: 
+      {ul
+      {- \[[ln f e1 ... en]\]{_t} [= Some (f v1 ... vn)] if for all 
+         i : \[[ei]\]{_t} [= Some vi].}
+      {- \[[ln f e1 ... en]\]{_t} [= None] otherwise.}} *) 
+
+  val l1 : ('a -> 'b) -> 'a event -> 'b event 
+  val l2 : ('a -> 'b -> 'c) -> 'a event -> 'b event -> 'c event
+  val l3 : ('a -> 'b -> 'c -> 'd) -> 'a event -> 'b event -> 'c event -> 
+    'd event
+  val l4 : ('a -> 'b -> 'c -> 'd -> 'e) -> 'a event -> 'b event -> 'c event -> 
+    'd event -> 'e event 
+  val l5 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f) -> 'a event -> 'b event -> 
+    'c event -> 'd event -> 'e event -> 'f event 
+  val l6 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g) -> 'a event -> 'b event -> 
+    'c event -> 'd event -> 'e event -> 'f event -> 'g event
+
   (** {1 Pervasives support} *) 
 
   (** Events with option occurences. *) 

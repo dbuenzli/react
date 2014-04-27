@@ -774,6 +774,132 @@ module E = struct
         add_dep m' m.enode;
         r
 
+  (* Lifting *) 
+
+  let l1 = map 
+  let l2 f e0 e1 = match e0, e1 with 
+  | Never, _ -> Never 
+  | _, Never -> Never
+  | Emut m0, Emut m1 -> 
+      let r = rsucc2 m0.enode m1.enode in 
+      let m' = emut r in 
+      let rec p () = [ m0.enode; m1.enode ] in 
+      let u c = match !(m0.ev), !(m1.ev)  with 
+      | None, _
+      | _, None -> ()
+      | Some v0, Some v1 -> eupdate (f v0 v1) m' c 
+      in
+      add_dep m0 m'.enode; 
+      add_dep m1 m'.enode; 
+      event m' p u
+    
+  let l3 f e0 e1 e2 = match e0, e1, e2 with 
+  | Never, _, _ -> Never 
+  | _, Never, _ -> Never
+  | _, _, Never -> Never
+  | Emut m0, Emut m1, Emut m2 -> 
+      let r = rsucc (rmax (rmax m0.enode m1.enode) m2.enode) in 
+      let m' = emut r in 
+      let rec p () = [ m0.enode; m1.enode; m2.enode ] in 
+      let u c = match !(m0.ev), !(m1.ev), !(m2.ev)  with 
+      | None, _, _
+      | _, None, _
+      | _, _, None -> ()
+      | Some v0, Some v1, Some v2 -> eupdate (f v0 v1 v2) m' c 
+      in
+      add_dep m0 m'.enode; 
+      add_dep m1 m'.enode; 
+      add_dep m2 m'.enode; 
+      event m' p u
+
+
+  let l4 f e0 e1 e2 e3 = match e0, e1, e2, e3 with 
+  | Never, _, _, _ -> Never 
+  | _, Never, _, _ -> Never
+  | _, _, Never, _ -> Never
+  | _, _, _, Never -> Never
+  | Emut m0, Emut m1, Emut m2, Emut m3 -> 
+      let r = rsucc (rmax (rmax m0.enode m1.enode) (rmax m2.enode m3.enode)) in 
+      let m' = emut r in 
+      let rec p () = [ m0.enode; m1.enode; m2.enode; m3.enode ] in 
+      let u c = match !(m0.ev), !(m1.ev), !(m2.ev), !(m3.ev) with 
+      | None, _, _, _
+      | _, None, _, _
+      | _, _, None, _
+      | _, _, _, None -> ()
+      | Some v0, Some v1, Some v2, Some v3 -> eupdate (f v0 v1 v2 v3) m' c 
+      in
+      add_dep m0 m'.enode; 
+      add_dep m1 m'.enode; 
+      add_dep m2 m'.enode; 
+      add_dep m3 m'.enode; 
+      event m' p u
+
+  let l5 f e0 e1 e2 e3 e4 = match e0, e1, e2, e3, e4 with 
+  | Never, _, _, _, _ -> Never 
+  | _, Never, _, _, _ -> Never
+  | _, _, Never, _, _ -> Never
+  | _, _, _, Never, _ -> Never
+  | _, _, _, _, Never -> Never
+  | Emut m0, Emut m1, Emut m2, Emut m3, Emut m4 -> 
+      let r = 
+        rsucc (rmax (rmax (rmax m0.enode m1.enode) (rmax m2.enode m3.enode))
+          m4.enode)
+      in 
+      let m' = emut r in 
+      let rec p () = [ m0.enode; m1.enode; m2.enode; m3.enode; m4.enode ] in 
+      let u c = match !(m0.ev), !(m1.ev), !(m2.ev), !(m3.ev), !(m4.ev) with 
+      | None, _, _, _, _
+      | _, None, _, _, _
+      | _, _, None, _, _
+      | _, _, _, None, _
+      | _, _, _, _, None -> ()
+      | Some v0, Some v1, Some v2, Some v3, Some v4 -> 
+          eupdate (f v0 v1 v2 v3 v4) m' c 
+      in
+      add_dep m0 m'.enode; 
+      add_dep m1 m'.enode; 
+      add_dep m2 m'.enode; 
+      add_dep m3 m'.enode; 
+      add_dep m4 m'.enode; 
+      event m' p u
+
+  let l6 f e0 e1 e2 e3 e4 e5 = match e0, e1, e2, e3, e4, e5 with 
+  | Never, _, _, _, _, _ -> Never 
+  | _, Never, _, _, _, _ -> Never
+  | _, _, Never, _, _, _ -> Never
+  | _, _, _, Never, _, _ -> Never
+  | _, _, _, _, Never, _ -> Never
+  | _, _, _, _, _, Never -> Never
+  | Emut m0, Emut m1, Emut m2, Emut m3, Emut m4, Emut m5 -> 
+      let r = 
+        rsucc (rmax (rmax (rmax m0.enode m1.enode) (rmax m2.enode m3.enode))
+          (rmax m4.enode m5.enode))
+      in 
+      let m' = emut r in 
+      let rec p () = [ m0.enode; m1.enode; m2.enode; m3.enode; m4.enode; 
+                       m5.enode; ] in 
+      let u c = match !(m0.ev), !(m1.ev), !(m2.ev), !(m3.ev), !(m4.ev), 
+                      !(m5.ev) with 
+      | None, _, _, _, _, _
+      | _, None, _, _, _, _
+      | _, _, None, _, _, _
+      | _, _, _, None, _, _
+      | _, _, _, _, None, _
+      | _, _, _, _, _, None -> ()
+      | Some v0, Some v1, Some v2, Some v3, Some v4, Some v5 -> 
+          eupdate (f v0 v1 v2 v3 v4 v5) m' c 
+      in
+      add_dep m0 m'.enode; 
+      add_dep m1 m'.enode; 
+      add_dep m2 m'.enode; 
+      add_dep m3 m'.enode; 
+      add_dep m4 m'.enode; 
+      add_dep m5 m'.enode; 
+      event m' p u
+
+  (* Pervasives support *) 
+
   module Option = struct
     let some e = map (fun v -> Some v) e 
     let value ?default e = match default with 
