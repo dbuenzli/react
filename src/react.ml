@@ -1329,7 +1329,19 @@ module S = struct
 
   module Option = struct
     let none = Const None
-    let some ?eq i s = fmap ?eq (fun v -> v) i s
+    let some s = 
+      let eq = match eq_fun s with 
+      | None -> None 
+      | Some eq -> 
+          let eq v v' = match v, v' with 
+          | Some v, Some v' -> eq v v'
+          | _ -> assert false 
+          in
+          Some eq
+      in
+      map ?eq (fun v -> Some v) s
+
+    let value ?eq i s = fmap ?eq (fun v -> v) i s
   end
 
   module Compare = struct 

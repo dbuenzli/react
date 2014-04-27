@@ -580,8 +580,12 @@ module S : sig
     val none : 'a option signal
     (** [none] is [S.const None]. *)
 
-    val some : ?eq:('a -> 'a -> bool) -> 'a -> 'a option signal -> 'a signal
-    (** [some i s] is [fmap (fun v -> v) i s]. *)
+    val some : 'a signal -> 'a option signal 
+    (** [some s] is [S.map ~eq (fun v -> Some v) None], where [eq] uses
+        [s]'s equality function to test the [Some v]'s equalities. *)
+
+    val value : ?eq:('a -> 'a -> bool) -> 'a -> 'a option signal -> 'a signal
+    (** [value i s] is [S.fmap (fun v -> v) i s]. *)
   end
 
   module Compare : sig
