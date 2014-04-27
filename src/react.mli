@@ -266,7 +266,7 @@ module E : sig
     (** [some e] is [map (fun v -> Some v) e]. *) 
 
     val value : ?default:'a signal -> 'a option event -> 'a event 
-    (** [some default e] either silences [None] occurences if [default] is
+    (** [value default e] either silences [None] occurences if [default] is
         unspecified or replaces them by the value of [default] at the occurence
         time.
         {ul 
@@ -613,8 +613,25 @@ module S : sig
     (** [some s] is [S.map ~eq (fun v -> Some v) None], where [eq] uses
         [s]'s equality function to test the [Some v]'s equalities. *)
 
-    val value : ?eq:('a -> 'a -> bool) -> 'a -> 'a option signal -> 'a signal
-    (** [value i s] is [S.fmap (fun v -> v) i s]. *)
+    val value : ?eq:('a -> 'a -> bool) -> 
+      default:[`Init of 'a signal | `Always of 'a signal ] -> 
+      'a option signal -> 'a signal
+    (** [value default s] is [s] with only its [Some v] values. 
+        Whenever [s] is [None], if [default] is [`Always dv] then 
+        the current value of [dv] is used instead. If [default]
+        is [`Init dv] the current value of [dv] is only used
+        if there's no value at creation time, otherwise the last
+        [Some v] value of [s] is used.
+        {ul 
+        {- \[[value ~default s]\]{_t} [= v] if \[[s]\]{_t} [= Some v]}
+        {- \[[value ~default:(`Always d) s]\]{_t} [=] \[[d]\]{_t} 
+          if \[[s]\]{_t} [= None]}
+        {- \[[value ~default:(`Init d) s]\]{_0} [=] \[[d]\]{_0} 
+          if \[[s]\]{_0} [= None]}
+        {- \[[value ~default:(`Init d) s]\]{_t} [=]
+           \[[value ~default:(`Init d) s]\]{_t'}
+          if \[[s]\]{_t} [= None] and t' is the greatest t' < t
+          with \[[s]\]{_t'} [<> None] or 0 if there is no such [t'].}} *)
   end
 
   module Compare : sig

@@ -1136,6 +1136,55 @@ let test_lifters () =
                     !a_dx4; !a_dx5; !a_dx6 ];
   keep_sref create_dyn
 
+let test_option () = 
+  let b0, set_b0 = S.create None in 
+  let b1, set_b1 = S.create (Some 1) in 
+  let b2 = S.const None in
+  let b3 = S.const (Some 3) in 
+  let d, set_d = S.create 512 in
+  let dsome = S.Option.some d in
+  let s00 = S.Option.value ~default:(`Init (S.const 255)) b0 in 
+  let s01 = S.Option.value ~default:(`Init (S.const 255)) b1 in 
+  let s02 = S.Option.value ~default:(`Init (S.const 255)) b2 in 
+  let s03 = S.Option.value ~default:(`Init (S.const 255)) b3 in 
+  let s10 = S.Option.value ~default:(`Always (S.const 255)) b0 in 
+  let s11 = S.Option.value ~default:(`Always (S.const 255)) b1 in 
+  let s12 = S.Option.value ~default:(`Always (S.const 255)) b2 in 
+  let s13 = S.Option.value ~default:(`Always (S.const 255)) b3 in 
+  let s20 = S.Option.value ~default:(`Init d) b0 in 
+  let s21 = S.Option.value ~default:(`Init d) b1 in 
+  let s22 = S.Option.value ~default:(`Init d) b2 in 
+  let s23 = S.Option.value ~default:(`Init d) b3 in 
+  let s30 = S.Option.value ~default:(`Always d) b0 in 
+  let s31 = S.Option.value ~default:(`Always d) b1 in 
+  let s32 = S.Option.value ~default:(`Always d) b2 in 
+  let s33 = S.Option.value ~default:(`Always d) b3 in 
+  let a_dsome = vals dsome [ Some 512; Some 1024; Some 2048;] in
+  let a_s00 = vals s00 [255;3] in
+  let a_s01 = vals s01 [1;] in
+  let a_s02 = vals s02 [255;] in
+  let a_s03 = vals s03 [3;] in
+  let a_s10 = vals s10 [255;3;255] in
+  let a_s11 = vals s11 [1;255;] in
+  let a_s12 = vals s12 [255] in
+  let a_s13 = vals s13 [3] in
+  let a_s20 = vals s20 [512;3] in
+  let a_s21 = vals s21 [1;] in
+  let a_s22 = vals s22 [512] in
+  let a_s23 = vals s23 [3] in
+  let a_s30 = vals s30 [512;3;1024;2048] in
+  let a_s31 = vals s31 [1;512;1024;2048] in
+  let a_s32 = vals s32 [512] in
+  let a_s33 = vals s33 [3] in
+  set_b0 (Some 3); set_b1 None; set_d 1024; set_b0 None; set_d 2048;
+  empty a_dsome;
+  List.iter empty [ a_s00; a_s01; a_s02; a_s03; 
+                    a_s10; a_s11; a_s12; a_s13; 
+                    a_s20; a_s21; a_s22; a_s23; 
+                    a_s30; a_s31; a_s32; a_s33; ];
+  ()
+
+
 let test_signals () =   
   test_no_leak ();
   test_hold ();
@@ -1165,6 +1214,7 @@ let test_signals () =
   test_fix ();
   test_fix' ();
   test_lifters ();
+  test_option ();
   ()
 
 (* Test steps *) 

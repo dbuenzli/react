@@ -1484,7 +1484,69 @@ module S = struct
       in
       map ?eq (fun v -> Some v) s
 
-    let value ?eq i s = fmap ?eq (fun v -> v) i s
+    let value ?(eq = ( = )) ~default s = match s with 
+    | Const (Some v) -> Const v
+    | Const None -> 
+        let d = match default with `Init d -> d | `Always d -> d in 
+        begin match d with 
+        | Const d -> Const d 
+        | Smut md ->
+            match Step.find_unfinished [md.snode] with 
+            | c when c == Step.nil -> Const (sval md)
+            | c ->
+                let m' = smut (rsucc md.snode) eq in
+                let rec p () = [ md.snode ] 
+                and u c = 
+                  Node.rem_dep md.snode m'.snode;
+                  supdate (sval md) m' c;
+                  Node.stop m'.snode
+                in
+                Node.add_dep md.snode m'.snode; 
+                signal m' p u
+        end
+    | Smut m ->
+        match default with 
+        | `Init (Const d) -> fmap ~eq (fun v -> v) d s
+        | `Always (Const d) -> map ~eq (function None -> d | Some v -> v) s
+        | `Init (Smut md) ->
+            begin match Step.find_unfinished [md.snode] with 
+            | c when c == Step.nil -> 
+                let m' = smut (rsucc m.snode) eq in
+                let rec p () = [ m.snode ] 
+                and u c = match sval m with 
+                | Some v -> supdate v m' c | None -> () 
+                in
+                Node.add_dep m.snode m'.snode; 
+                signal ~i:(sval md) m' p u 
+            | c -> 
+                let m' = smut (rsucc2 m.snode md.snode) eq in 
+                let rec p () = [ m.snode ] in (* subsequent updates *) 
+                let u c = match sval m with 
+                | Some v -> supdate v m' c | None -> ()
+                in
+                let rec p_first () = [ m.snode; md.snode ] in (* first update *)
+                let u_first c = 
+                  Node.rem_dep md.snode m'.snode; 
+                  begin match sval m with 
+                  | None -> supdate (sval md) m' c 
+                  | Some v -> supdate v m' c 
+                  end;
+                  Node.bind m'.snode p u
+                in
+                Node.add_dep m.snode m'.snode; 
+                Node.add_dep md.snode m'.snode; 
+                signal m' p_first u_first
+            end
+        | `Always (Smut md) ->
+            let m' = smut (rsucc2 m.snode md.snode) eq in 
+            let rec p () = [ m.snode; md.snode ] in 
+            let u c = match sval m with 
+            | Some v -> supdate v m' c 
+            | None -> supdate (sval md) m' c 
+            in
+            Node.add_dep m.snode m'.snode; 
+            Node.add_dep md.snode m'.snode; 
+            signal m' p u
   end
 
   module Compare = struct 
