@@ -63,6 +63,8 @@ module E : sig
       {b Raises.} [Invalid_argument] on {!E.never}. *)
 
   (**/**)
+  val id : 'a event -> string
+  val set_id : string -> 'a event -> 'a event
   val rank : 'a event -> int                                               
   (**/**) 
 
@@ -323,6 +325,8 @@ module S : sig
       {b Raises.} [Invalid_argument] on constant signals. *)
 
   (**/**)
+  val id : 'a signal -> string
+  val set_id : string -> 'a signal -> 'a signal 
   val rank : 'a signal -> int                                               
   val eq_fun : 'a signal -> ('a -> 'a -> bool) option
   (**/**)

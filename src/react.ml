@@ -84,7 +84,8 @@ module Wa = struct
 end
 
 type node = 
-  { mutable rank : int;        (* its rank (height) in the dataflow graph. *)
+  { mutable id : string option;                   (* its id for debugging. *) 
+    mutable rank : int;        (* its rank (height) in the dataflow graph. *)
     mutable stamp : step;          (* last step in which it was scheduled. *)
     mutable retain : unit -> unit; (* retained by the node, NEVER invoked. *)
     mutable producers : unit -> node list;   (* nodes on which it depends. *) 
@@ -333,13 +334,21 @@ end
     
 module Node = struct
   let delayed_rank = delayed_rank
-  let min_rank = min_int
+  let min_rank = 0
   let max_rank = delayed_rank - 1
+
                  
   let nop _ = ()
   let no_producers () = []
+
+  let auto_gen = false 
+  let id_gen = 
+    if not auto_gen then fun () -> None else
+    let i = ref (-1) in 
+    fun () -> incr i; Some ("g" ^ (string_of_int !i))
+
   let create r = 
-    { rank = r; stamp = Step.nil; update = nop; retain = nop;
+    { id = id_gen (); rank = r; stamp = Step.nil; update = nop; retain = nop;
       producers = no_producers; deps = Wa.create 0 }
 
   let rem_dep n n' = Wa.rem n.deps n'
@@ -459,6 +468,12 @@ module E = struct
   let rank = function 
   | Never -> invalid_arg err_is_never 
   | Emut m -> m.enode.rank 
+
+  let id = function Never -> "never" 
+                  | Emut m -> match m.enode.id with 
+                    | None -> invalid_arg "no id" | Some id -> id
+  let set_id id = 
+    function Never -> Never | Emut m as e -> m.enode.id <- Some id; e
 
   (* Basics *)
 
@@ -951,6 +966,13 @@ module S = struct
   let rank = function 
   | Const _ -> invalid_arg err_is_const 
   | Smut m -> m.snode.rank       
+
+  let id = function Const _ -> "const" | Smut m -> 
+    match m.snode.id with None -> invalid_arg "no id" | Some id -> id
+
+  let set_id id = function 
+  | Const _ as s -> s 
+  | Smut m as s -> m.snode.id <- Some id; s 
 
   (* Basics *)
       
