@@ -1416,6 +1416,22 @@ module S = struct
 
     let rise s = edge_detect true s
     let fall s = edge_detect false s
+    let flip b = function 
+    | Never -> Const b 
+    | Emut m -> 
+        let m' = smut (rsucc m.enode) ( = ) in 
+        let rec p () = [ m.enode ]
+        and u c = supdate (Pervasives.not (sval m')) m' c in
+        E.add_dep m m'.snode;
+        (* can't use [signal] here because of semantics. *)
+        Node.bind m'.snode p u;
+        m'.sv <- Some b;
+        begin match Step.find_unfinished [m.enode] with
+        | c when c == Step.nil ->  ()
+        | c -> Step.add c m'.snode
+        end;
+        Smut m'
+
   end
   
   module Int = struct

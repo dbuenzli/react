@@ -1192,12 +1192,15 @@ let test_bool () =
   let a_sedge = occs (S.Bool.edge s) [true; false] in 
   let a_srise = occs (S.Bool.rise s) [()] in 
   let a_rfall = occs (S.Bool.fall s) [()] in 
+  let a_flip_never = vals (S.Bool.flip false E.never) [false] in 
+  let a_flip = vals (S.Bool.flip true (S.changes s)) [true; false; true] in
+  let dyn_flip = S.bind s (fun _ -> S.Bool.flip true (S.changes s)) in
+  let a_dyn_flip = vals dyn_flip [true; false] in
   set_s false; set_s true; set_s true; set_s false; 
-  List.iter empty [a_zedge; a_sedge ]; 
+  List.iter empty [a_zedge; a_sedge; ]; 
   List.iter empty [a_zrise; a_zfall; a_srise; a_rfall ]; 
+  List.iter empty [a_flip_never; a_flip; a_dyn_flip ];
   ()
-
-
 
 let test_signals () =   
   test_no_leak ();

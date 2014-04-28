@@ -8,11 +8,13 @@ this should be factored out.
 # New event combinators
 
 * E.merge but only on simultanous occs ? 
+* Review Bool.flip init.
 
 # Signal init. 
 
 Instead of having bare values why not always have signals ? 
 This would undermine the temptation of using S.value.
+
 
 # New signal combinators. 
 
