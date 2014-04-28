@@ -1393,6 +1393,29 @@ module S = struct
     let not s = l1 ~eq not s
     let ( && ) s s' = l2 ~eq ( && ) s s' 
     let ( || ) s s' = l2 ~eq ( || ) s s'
+        
+    let edge s = changes s
+    let edge_detect edge = function
+    | Const _ -> Never 
+    | Smut m -> 
+        let m' = emut (rsucc m.snode) in 
+        let rec p () = [ m.snode ] 
+        and u c = if (sval m) = edge then eupdate () m' c in
+        begin match Step.find_unfinished (m.snode.producers ()) with 
+        | c when c == Step.nil -> Node.add_dep m.snode m'.enode 
+        | c -> (* In a step. m' cannot occur (cf. semantics) so dep is 
+                  added at the end of the cycle to avoid being scheduled. *) 
+            let setup () = 
+              if m.snode.update == Node.nop 
+              then () (* m stopped in step *) 
+              else Node.add_dep m.snode m'.enode 
+            in
+            Step.add_eop c setup 
+        end;
+        event m' p u
+
+    let rise s = edge_detect true s
+    let fall s = edge_detect false s
   end
   
   module Int = struct

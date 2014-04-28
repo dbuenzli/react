@@ -1184,6 +1184,20 @@ let test_option () =
                     a_s30; a_s31; a_s32; a_s33; ];
   ()
 
+let test_bool () = 
+  let s, set_s = S.create false in
+  let a_zedge = occs (S.Bool.(edge zero)) [] in 
+  let a_zrise = occs (S.Bool.(rise zero)) [] in 
+  let a_zfall = occs (S.Bool.(fall zero)) [] in
+  let a_sedge = occs (S.Bool.edge s) [true; false] in 
+  let a_srise = occs (S.Bool.rise s) [()] in 
+  let a_rfall = occs (S.Bool.fall s) [()] in 
+  set_s false; set_s true; set_s true; set_s false; 
+  List.iter empty [a_zedge; a_sedge ]; 
+  List.iter empty [a_zrise; a_zfall; a_srise; a_rfall ]; 
+  ()
+
+
 
 let test_signals () =   
   test_no_leak ();
@@ -1215,6 +1229,7 @@ let test_signals () =
   test_fix' ();
   test_lifters ();
   test_option ();
+  test_bool ();
   ()
 
 (* Test steps *) 

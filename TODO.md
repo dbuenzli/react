@@ -1,4 +1,10 @@
 
+# Internal 
+
+In signals there's a pattern that occurs quite a few times where we add a 
+dependency only at the end of a cycle. There's quite some code replication
+this should be factored out.
+
 # New event combinators
 
 * E.merge but only on simultanous occs ? 

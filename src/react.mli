@@ -529,6 +529,15 @@ module S : sig
     val not : bool signal -> bool signal
     val ( && ) : bool signal -> bool signal -> bool signal
     val ( || ) : bool signal -> bool signal -> bool signal
+
+    val edge : bool signal -> bool event
+    (** [edge s] is [changes s]. *) 
+
+    val rise : bool signal -> unit event 
+    (** [rise s] is [E.fmap (fun b -> if b then Some () else None) (edge s)].*)
+
+    val fall : bool signal -> unit event
+    (** [fall s] is [E.fmap (fun b -> if b then None else Some ()) (edge s)].*)
   end
   
   module Int : sig
