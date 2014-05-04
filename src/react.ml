@@ -1213,14 +1213,12 @@ module S = struct
   let switch ?(eq = ( = )) = function
   | Const s -> s
   | Smut mss -> 
-      let src = ref (sval mss) in                   (* current signal source. *)
-      let r = match !src with 
-      | Smut ms -> rsucc2 ms.snode mss.snode | Const _ -> rsucc mss.snode
-      in
-      let m' = smut r eq in
+      let dummy = smut Node.min_rank eq in 
+      let src = ref (Smut dummy) in    (* dummy is overwritten by sig. init *) 
+      let m' = smut (rsucc mss.snode) eq in
       let rec p () = match !src with
       | Smut m -> [ mss.snode; m.snode] | Const _ -> [ mss.snode ]
-      and u c = 
+      and u c =
         if (sval mss) == !src then (* ss didn't change, !src did *)
           begin match !src with 
           | Smut m -> supdate (sval m) m' c
@@ -1240,7 +1238,10 @@ module S = struct
                 supdate v m' c
             | Smut m -> 
                 Node.add_dep m.snode m'.snode; 
-                if Node.update_rank m'.snode (rsucc2 m.snode mss.snode) then
+                if 
+                  Node.update_rank m'.snode (rsucc2 m.snode mss.snode) 
+                  && c != Step.nil
+                then
                   begin 
                     (* Rank increased because of m. Thus m may still
                        update and we need to reschedule. Next time we 
@@ -1250,15 +1251,16 @@ module S = struct
                     Step.add c m'.snode
                   end
                 else
-                (* No rank increase. m already updated if needed. 
-                   No need to reschedule and rebuild the queue. *)
+                (* No rank increase or static init. m already updated 
+                   if needed, no need to reschedule and rebuild the queue. *)
                 supdate (sval m) m' c
           end
       in
       Node.add_dep mss.snode m'.snode; 
-      match !src with 
-      | Const i -> signal ~i m' p u
-      | Smut m -> Node.add_dep m.snode m'.snode; signal m' p u
+      (* We add a dep to dummy to avoid a long scan of Wa.rem when we remove
+         the dep in the [u] function during static init. *) 
+      Node.add_dep dummy.snode m'.snode; 
+      signal m' p u
    
   let bind ?eq s sf = switch ?eq (map ~eq:( == ) sf s)
 
