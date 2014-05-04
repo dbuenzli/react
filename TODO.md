@@ -9,12 +9,31 @@ this should be factored out.
 
 * E.merge but only on simultanous occs ? 
 * Review Bool.flip init.
+* S.Bool.edge,rise,fall plural ? 
 
 # Signal init. 
 
 Instead of having bare values why not always have signals ? 
 This would undermine the temptation of using S.value.
 
+# Stopped nodes
+
+Stopped nodes could be detected and considered as constant by
+smart constructors. 
+
+# Multisample 
+
+Current combinators are not good for sampling multiple signals, 
+which is generally useful in conjunction with accum. TODO
+maybe not in fact see list selector. Just compute the as a signal.
+But maybe not always natural ? 
+
+
+# Recursive defs
+
+Investigate the case when dynamics can replace signals with constants
+one which could make a direct dep on the delay noded (and hence
+raise). Doesn't seem possible but I suspect I saw this once.
 
 # New signal combinators. 
 
