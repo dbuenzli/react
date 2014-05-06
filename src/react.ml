@@ -1237,11 +1237,18 @@ module S = struct
                 ignore (Node.update_rank m'.snode (rsucc mss.snode)); 
                 supdate v m' c
             | Smut m -> 
-                Node.add_dep m.snode m'.snode; 
-                if 
-                  Node.update_rank m'.snode (rsucc2 m.snode mss.snode) 
-                  && c != Step.nil
-                then
+                Node.add_dep m.snode m'.snode;
+                if c == Step.nil then 
+                  begin
+                    ignore (Node.update_rank m'.snode
+                              (rsucc2 m.snode mss.snode));
+                    (* Check if the init src is in a step. *)
+                    match Step.find_unfinished [m.snode] with
+                    | c when c == Step.nil -> supdate (sval m) m' c
+                    | c -> Step.add c m'.snode
+                  end 
+                else 
+                if Node.update_rank m'.snode (rsucc2 m.snode mss.snode) then 
                   begin 
                     (* Rank increased because of m. Thus m may still
                        update and we need to reschedule. Next time we 
@@ -1251,8 +1258,8 @@ module S = struct
                     Step.add c m'.snode
                   end
                 else
-                (* No rank increase or static init. m already updated 
-                   if needed, no need to reschedule and rebuild the queue. *)
+                  (* No rank increase. m already updated if needed, no need 
+                     to reschedule and rebuild the queue. *)
                 supdate (sval m) m' c
           end
       in

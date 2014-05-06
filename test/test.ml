@@ -1028,6 +1028,25 @@ let test_dyn_bind () = (* i.e. dyn switch *)
   set_s1 true;
   List.iter empty [assert_bind] 
 
+let test_dyn_bind2 () = (* i.e. dyn switch *) 
+  let s1, set_s1 = S.create true in 
+  let s2, set_s2 = S.create true in 
+  let bind1 = function 
+  | true -> 
+      let bind2 = function 
+      | true -> (S.map (fun _ -> 3) s1)
+      | false -> S.const 2
+      in
+      S.bind s2 bind2
+  | false -> S.const 2
+  in
+  let s = S.bind s1 bind1 in 
+  let assert_bind = vals s [3; 2; 3 ] in
+  set_s1 true; 
+  set_s1 false; 
+  set_s1 true;
+  List.iter empty [assert_bind]
+
 let test_fix () =
   let s, set_s = S.create 0 in
   let history s = 
@@ -1248,6 +1267,7 @@ let test_signals () =
   test_esswitch4 ();
   test_bind ();
   test_dyn_bind ();
+  test_dyn_bind2 ();
   test_fix ();
   test_fix' ();
   test_lifters ();
