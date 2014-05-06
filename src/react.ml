@@ -293,7 +293,18 @@ module Step = struct                                       (* Update steps. *)
     let h = Wa.create 11 in 
     { over = false; heap = h; eops = []; cops = []}
     
-  let add c n = if n.stamp == c then () else (n.stamp <- c; H.add c.heap n)
+  let add c n = 
+    if n.stamp == c then begin match n.id with 
+    | None -> () 
+    | Some id -> Printf.printf "no readd: %s %d\n" id n.rank
+    end else begin 
+      begin match n.id with 
+      | None -> () 
+      | Some id -> Printf.printf "add: %s %d\n" id n.rank
+      end; 
+      n.stamp <- c; H.add c.heap n
+    end
+
   let add_deps c n = Wa.iter (add c) n.deps
   let add_eop c op = c.eops <- op :: c.eops
   let add_cop c op = c.cops <- op :: c.cops
@@ -305,8 +316,16 @@ module Step = struct                                       (* Update steps. *)
     let cops c = List.iter (fun op -> op ()) c.cops; c.cops <- [] in
     let finish c = c.over <- true; c.heap <- Wa.create 0 in
     let rec update c = match H.take c.heap with
-    | Some n when n.rank <> delayed_rank -> n.update c; update c 
+    | Some n when n.rank <> delayed_rank -> 
+        begin 
+          begin match n.id with 
+          | None -> () 
+          | Some id -> Printf.printf "update: %s:%d\n" id n.rank;
+          end;
+          n.update c; update c 
+        end
     | Some n -> 
+        Printf.printf "-Delayed-------------------------------\n%!";
         let c' = create () in
         eops c; List.iter (fun n -> n.update c') (n :: H.els c.heap); cops c;
         finish c;
@@ -315,8 +334,10 @@ module Step = struct                                       (* Update steps. *)
     in
     update c
 
-  let execute c = if c.over then invalid_arg err_step_executed else execute c
-
+  let execute c = 
+    Printf.printf "-Start---------------------------------------\n%!";
+    if c.over then invalid_arg err_step_executed else execute c;
+    Printf.printf "-Stop---------------------------------------\n%!"
       
   let find_unfinished nl = (* find unfinished step in recursive producers. *)
     let rec aux next = function            (* zig-zag breadth-first search. *)
