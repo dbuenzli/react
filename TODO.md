@@ -5,6 +5,15 @@ In signals there's a pattern that occurs quite a few times where we add a
 dependency only at the end of a cycle. There's quite some code replication
 this should be factored out.
 
+
+# Exceptions
+
+* Make steps resistant to exceptions ? There's more than one solution here
+  one is to discard the step and unschedule all nodes. Another would be
+  to catch them an trap them like in Fut. 
+
+
+
 # New event combinators
 
 * E.merge but only on simultanous occs ? 
