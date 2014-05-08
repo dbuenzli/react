@@ -180,8 +180,8 @@ type 'a event = Never | Emut of 'a emut
 
 type 'a smut = 
   { mutable sv : 'a option;         (* signal value (None only temporary). *)
-    mutable eq : 'a -> 'a -> bool;      (* to detect signal value changes. *)
-    mutable snode : node }                             (* associated node. *)
+    eq : 'a -> 'a -> bool;              (* to detect signal value changes. *)
+    snode : node }                                     (* associated node. *)
 
 type 'a signal = Const of 'a | Smut of 'a smut
 (* The type for signals.
