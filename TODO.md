@@ -1,11 +1,4 @@
 
-# Internal 
-
-In signals there's a pattern that occurs quite a few times where we add a 
-dependency only at the end of a cycle. There's quite some code replication
-this should be factored out.
-
-
 # Exceptions
 
 * Make steps resistant to exceptions ? There's more than one solution here
@@ -13,12 +6,12 @@ this should be factored out.
   to catch them an trap them like in Fut. 
 
 
-
 # New event combinators
 
 * E.merge but only on simultanous occs ? 
 * Review Bool.flip init.
 * S.Bool.edge,rise,fall plural ? 
+* E.Bool.flip 
 
 # Signal init. 
 

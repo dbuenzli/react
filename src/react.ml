@@ -941,6 +941,29 @@ module S = struct
         m.sv <- Some v; 
         Step.add_deps c m.snode;
         Step.execute c
+
+  let end_of_step_add_dep ?(post_add_op = fun () -> ()) ~stop_if_stopped m m' = 
+    (* In some combinators, when the semantics of event m' is such
+       that it should not occur in the (potential) step it is created,
+       we add the dependency [m'] to signal [m] only via an end of
+       step operation to avoid being scheduled in the step. *)
+    match Step.find_unfinished (m.snode.producers ()) with
+    | c when c == Step.nil -> 
+        Node.add_dep m.snode m'.enode; 
+        post_add_op ();
+    | c -> 
+        let add_dep () = 
+          if m.snode.update == Node.nop then 
+            (* m stopped in step *)
+            (if stop_if_stopped then Node.stop m'.enode) 
+          else
+          begin
+            ignore (Node.update_rank m'.enode (rsucc m.snode));
+            Node.add_dep m.snode m'.enode; 
+            post_add_op ();
+          end
+        in
+        Step.add_eop c add_dep
       
   (* Basics *)
       
@@ -1078,19 +1101,8 @@ module S = struct
         | Some v' -> last := Some v; eupdate (d v v') m' c
         | None -> assert false
       in
-      begin match Step.find_unfinished (m.snode.producers ()) with
-      | c when c == Step.nil -> 
-          Node.add_dep m.snode m'.enode; last := Some (sval m)
-      | c -> (* In a step, m' cannot occur in that step (cf. semantics).
-                Dep. added at the end of step to avoid being scheduled. *)
-          let setup () =
-            if m.snode.update == Node.nop then 
-              () (* m stopped in step *) 
-            else
-            (Node.add_dep m.snode m'.enode; last := Some (sval m))
-          in 
-          Step.add_eop c setup 
-      end;
+      let post_add_op () = last := Some (sval m) in 
+      end_of_step_add_dep ~post_add_op ~stop_if_stopped:true m m'; 
       event m' p u
         
   let changes = function
@@ -1099,18 +1111,7 @@ module S = struct
       let m' = emut (rsucc m.snode) in
       let rec p () = [ m.snode ]
       and u c = eupdate (sval m) m' c in
-      begin match Step.find_unfinished (m.snode.producers ()) with
-      | c when c == Step.nil -> Node.add_dep m.snode m'.enode 
-      | c -> (* In a step, m' cannot occur in that step (cf. semantics).
-                  Dep. added at the end of step to avoid being scheduled. *)
-          let setup () = 
-            if m.snode.update == Node.nop then 
-              () (* m stopped in step *) 
-            else
-            (Node.add_dep m.snode m'.enode)
-          in
-          Step.add_eop c setup
-      end;
+      end_of_step_add_dep ~stop_if_stopped:true m m'; 
       event m' p u
         
   let sample f e = function
@@ -1410,17 +1411,7 @@ module S = struct
         let m' = emut (rsucc m.snode) in 
         let rec p () = [ m.snode ] 
         and u c = if (sval m) = edge then eupdate () m' c in
-        begin match Step.find_unfinished (m.snode.producers ()) with 
-        | c when c == Step.nil -> Node.add_dep m.snode m'.enode 
-        | c -> (* In a step. m' cannot occur (cf. semantics) so dep is 
-                  added at the end of the cycle to avoid being scheduled. *) 
-            let setup () = 
-              if m.snode.update == Node.nop 
-              then () (* m stopped in step *) 
-              else Node.add_dep m.snode m'.enode 
-            in
-            Step.add_eop c setup 
-        end;
+        end_of_step_add_dep ~stop_if_stopped:true m m';
         event m' p u
 
     let rise s = edge_detect true s

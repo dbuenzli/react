@@ -1403,9 +1403,82 @@ let test_sswitch_init_rank_bug () =
   let actuate_assert = occs actuate [()] in
   send_down (); send_up (); empty actuate_assert
 
+let test_changes_end_of_step_add_bug () = 
+  let s, set_s = S.create false in
+  let s1, set_s1 = S.create false in
+  let high_s1 = high_s s1 in
+  let e = S.changes s1 in
+  let assert_o = assert_e_stub () in
+  let bind = function
+  | true -> 
+      let changing_rank = S.bind s @@ function
+        | true -> high_s1 
+        | false -> s1
+      in
+      let o = E.l2 (fun _ _ -> ()) (S.changes changing_rank) e in
+      assert_o := occs o [ () ];
+      S.const o
+  | false -> S.const E.never
+  in
+  let r = S.bind s bind in 
+  set_s true;
+  set_s1 true;
+  List.iter empty [!assert_o;];
+  keep_sref r
+
+let test_diff_end_of_step_add_bug () = 
+  let s, set_s = S.create false in
+  let s1, set_s1 = S.create false in
+  let high_s1 = high_s s1 in
+  let e = S.changes s1 in
+  let assert_o = assert_e_stub () in
+  let bind = function
+  | true -> 
+      let changing_rank = S.bind s @@ function
+        | true -> high_s1 
+        | false -> s1
+      in
+      let o = E.l2 (fun _ _ -> ()) (S.diff (fun _ _ -> ()) changing_rank) e in
+      assert_o := occs o [ () ];
+      S.const o
+  | false -> S.const E.never
+  in
+  let r = S.bind s bind in 
+  set_s true;
+  set_s1 true;
+  List.iter empty [!assert_o;];
+  keep_sref r
+
+let test_bool_rise_end_of_step_add_bug () = 
+  let s, set_s = S.create false in
+  let s1, set_s1 = S.create false in
+  let high_s1 = high_s s1 in
+  let e = S.changes s1 in
+  let assert_o = assert_e_stub () in
+  let bind = function
+  | true -> 
+      let changing_rank = S.bind s @@ function
+        | true -> high_s1 
+        | false -> s1
+      in
+      let o = E.l2 (fun _ _ -> ()) (S.Bool.rise changing_rank) e in
+      assert_o := occs o [ () ];
+      S.const o
+  | false -> S.const E.never
+  in
+  let r = S.bind s bind in 
+  set_s true;
+  set_s1 true;
+  List.iter empty [!assert_o;];
+  keep_sref r
+
 let test_misc () = 
   test_jake_heap_bug (); 
-  test_sswitch_init_rank_bug ()
+  test_sswitch_init_rank_bug ();
+  test_changes_end_of_step_add_bug ();
+  test_diff_end_of_step_add_bug ();
+  test_bool_rise_end_of_step_add_bug ();
+  ()
       
 let main () = 
   test_events ();
