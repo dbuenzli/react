@@ -2,7 +2,21 @@ version = "%%VERSION%%"
 description = "Declarative events and signals for OCaml"
 archive(byte) = "react.cma"
 archive(byte, plugin) = "react.cma"
+archive(byte, toploop) += "react_top.cma"
 archive(native) = "react.cmxa"
 archive(native, plugin) = "react.cmxs"
+archive(native, toploop) += "react_top.cmxs"
 exists_if = "react.cma"
+
+package "top" (
+ description = "Toplevel support for React"
+ version = "%%VERSION%%"
+ requires = "compiler-libs.toplevel"
+ archive(byte) = "react_top.cma"
+ archive(byte, plugin) = "react_top.cma"
+ archive(native) = "react_top.cmxa"
+ archive(native, plugin) = "react_top.cmxs"
+ exists_if = "react_top.cma"
+)
+
 
