@@ -576,7 +576,7 @@ module E = struct
       in
       add_dep m m'.enode;
       event m' p u
-        
+
   let diff d = function
   | Never -> Never
   | Emut m ->
@@ -660,7 +660,68 @@ module E = struct
           add_dep m m'.enode;
           add_dep mc m'.enode;
           event m' p u
-            
+
+  (* Dispatching *)
+
+  let split (type index) (type data) ?(eq = (=)) ?(hash = Hashtbl.hash)
+	    (f : data -> index) =
+    let module Ht = Weak.Make (struct
+      type t = index * data emut
+      let equal (i, _) (j, _) = eq i j
+      let hash (i, _) = hash i
+    end) in
+    function
+    | Never -> fun _ -> Never
+    | Emut m ->
+	let ht = Ht.create 11 in
+	let rec p () = [ m.enode ]
+	and u c =
+	  let v = eval m in
+	  try eupdate v (snd (Ht.find ht (f v, m))) c
+	  with Not_found -> () in
+	let n' = Node.create (rsucc m.enode) in
+	add_dep m n';
+	Node.bind n' p u;
+	fun i ->
+	  try Emut (snd (Ht.find ht (i, m)))
+	  with Not_found ->
+	    let mr = emut (rsucc n') in
+	    let i_mr = (i, mr) in
+	    mr.enode.retain <- (fun () -> ignore i_mr; ());
+	    mr.enode.producers <- (fun () -> [ n' ]);
+	    Ht.add ht i_mr; Emut mr
+
+  let route (type index) (type data) ?(eq = (=)) ?(hash = Hashtbl.hash) =
+    let module Ht = Weak.Make (struct
+      type t = index * data emut
+      let equal (i, _) (j, _) = eq i j
+      let hash (i, _) = hash i
+    end) in
+    fun ei e ->
+    match ei, e with
+    | Never, _ | _, Never -> fun _ -> Never
+    | Emut mi, Emut me ->
+	let ht = Ht.create 11 in
+	let rec p () = [ me.enode ]
+	and u c =
+	  match !(mi.ev), !(me.ev) with
+	  | None, _ | _, None -> ()
+	  | Some i, Some v ->
+	      try eupdate v (snd (Ht.find ht (i, me))) c
+	      with Not_found -> () in
+	let n' = Node.create (rsucc2 mi.enode me.enode) in
+	add_dep mi n';
+	add_dep me n';
+	Node.bind n' p u;
+	fun i ->
+	  try Emut (snd (Ht.find ht (i, me)))
+	  with Not_found ->
+	    let mr = emut (rsucc n') in
+	    let i_mr = (i, mr) in
+	    mr.enode.retain <- (fun () -> ignore i_mr; ());
+	    mr.enode.producers <- (fun () -> [ n' ]);
+	    Ht.add ht i_mr; Emut mr
+        
   (* Accumulating *)
 
   let accum ef i = match ef with

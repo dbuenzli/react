@@ -174,6 +174,37 @@ module E : sig
          \[[c]\]{_<=t} [= None]}
       {- \[[until c e]\]{_t} [= None] otherwise.}} *)
 
+  (** {1:dispatching Dispatching} *)
+
+  val split : ?eq: ('i -> 'i -> bool) -> ?hash: ('i -> int) ->
+	      ('a -> 'i) -> 'a event -> 'i -> 'a event
+  (** Given an event [e] and a function [f : 'a -> 'i] which projects a value
+      of [e] to an index, then [split f e] is a function [get_ev : 'i -> 'a
+      event] such that [get_ev i] are the occurrences of [e] which project to
+      [i].  Application of [get_ev] to the same index yields the same event
+      until garbage collected.  If you need to retain a value in the returned
+      event, you must keep the existing retained value, as it it also used by
+      the implementation.  Creating many events from the same partial
+      application [get_ev] is more efficient than using of multiple
+      {!filter}ed events, since the former uses a hash table to dispatch.
+      {ul
+      {- \[[split f e i]\]{_t} [= Some v] if \[[e]\]{_t} [= Some v] and
+	 [f v] = [i]}
+      {- \[[split f e i]\]{_t} [= None] otherwise.}} *)
+
+  val route : ?eq: ('i -> 'i -> bool) -> ?hash: ('i -> int) ->
+	      'i event -> 'a event -> 'i -> 'a event
+  (** [route ei e] is a function [get_ev] such that [get_ev i] are those
+      occurrences of [e] which are simultaneous with an occurrence of [i] on
+      [ei].  The indicated partial application is essential for efficiency.
+      [get_ev] applied to equal arguments yields the same event until garbage
+      collected.  If you retain a value in the returned event, enclose the
+      existing retained value, since it used by the implementation.
+      {ul
+      {- \[[route ei e i]\]{_t} [= Some v] if \[[e]\]{_t} [= Some v] and
+	 \[[ei]\]{_t} = [i]}
+      {- \[[route ei e i]\]{_t} [= None] otherwise.}} *)
+
   (** {1:accum Accumulating} *)
 
   val accum : ('a -> 'a) event -> 'a -> 'a event    

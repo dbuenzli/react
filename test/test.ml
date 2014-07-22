@@ -145,6 +145,29 @@ let test_map_stamp_filter_fmap () =
   List.iter empty [!assert_dy; !assert_dz];
   keep_eref create_dyn
 
+let test_split_and_route () =
+  let v, send_v = E.create () in
+  let test_on get_v =
+    let x = get_v "x" in
+    let y = get_v "y" in
+    assert (E.equal (get_v "x") x);
+    let assert_x = occs x ["x", 0; "x", 2; "x", 4] in
+    let assert_y = occs y ["y", 1; "y", 3] in
+    Gc.full_major ();
+    List.iter send_v ["x", 0; "y", 1; "x", 2; "y", 3; "x", 4];
+    List.iter empty [assert_x; assert_y] in
+  test_on (E.split fst v);
+  test_on (E.route (E.l1 fst v) v)
+
+let test_route_disjoint () =
+  let v, send_v = E.create () in
+  let w, send_w = E.create () in
+  let get_v = E.route w v in
+  let v = E.trace (fun _ -> assert false) (get_v "x") in
+  send_v ("x", 0);
+  send_w "x";
+  keep_eref v
+
 let test_diff_changes () = 
   let x, send_x = E.create () in 
   let y = E.diff ( - ) x in 
@@ -402,6 +425,8 @@ let test_events () =
   test_once_drop_once ();
   test_app ();
   test_map_stamp_filter_fmap ();
+  test_split_and_route ();
+  test_route_disjoint ();
   test_diff_changes ();
   test_on ();
   test_dismiss ();
