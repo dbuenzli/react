@@ -1,3 +1,4 @@
 test.native
 clock.native
 breakout.native
+bench_split.native
