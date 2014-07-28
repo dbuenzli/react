@@ -10,7 +10,7 @@ signal, it lets the client chooses the concrete timeline.
 React is made of a single, independent, module and distributed under
 the BSD3 license.
 
-Home page: http://erratique.ch/software/react   
+Home page: http://erratique.ch/software/react  
 Contact: Daniel Bünzli `<daniel.buenzl i@erratique.ch>`
 
 
