@@ -4,9 +4,9 @@
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,
 a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,
 small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,
-form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td 
-{ margin: 0; padding: 0; border: 0 none; outline: 0; font-size: 100%; 
-  font-weight: inherit; font-style:inherit; font-family:inherit; 
+form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td
+{ margin: 0; padding: 0; border: 0 none; outline: 0; font-size: 100%;
+  font-weight: inherit; font-style:inherit; font-family:inherit;
   line-height: inherit; vertical-align: baseline; text-align:inherit;
   color:inherit; background: transparent; }
 
@@ -19,14 +19,14 @@ body { font: normal 10pt/1.375em helvetica, arial, sans-serif; text-align:left;
        color: black; background: white /* url(line-height-22.gif) */; }
 
 b { font-weight: bold }
-em { font-style: italic } 
+em { font-style: italic }
 
-tt, code, pre { font-family: WorkAroundWebKitAndMozilla, monospace; 
+tt, code, pre { font-family: WorkAroundWebKitAndMozilla, monospace;
                 font-size: 1em; }
 pre code { font-size : inherit; }
-.codepre { margin-bottom:1.375em /* after code example we introduce space. */ } 
+.codepre { margin-bottom:1.375em /* after code example we introduce space. */ }
 
-.superscript,.subscript 
+.superscript,.subscript
 { font-size : 0.813em; line-height:0; margin-left:0.4ex;}
 .superscript { vertical-align: super; }
 .subscript { vertical-align: sub; }
@@ -47,7 +47,7 @@ h1 + pre { margin-bottom:1.375em} /* Toplevel module description */
 
 /* .navbar { margin-bottom: -1.375em } */
 h1 { font-weight: bold; font-size: 1.5em; /* margin-top:1.833em; */
-     margin-top:0.917em; padding-top:0.875em; 
+     margin-top:0.917em; padding-top:0.875em;
      border-top-style:solid; border-width:1px; border-color:#AAA; }
 h2 { font-weight: bold; font-size: 1.313em; margin-top: 1.048em }
 h3 { font-weight: bold; font-size: 1.125em; margin-top: 1.222em }
@@ -63,7 +63,7 @@ pre { margin-top: 1.375em }
 .info { margin: 0.458em 0em -0.458em 2em;}/* Description of types values etc. */
 td .info { margin:0; padding:0; margin-left: 2em;} /* Description in indexes */
 
-ul, ol { margin-top:0.688em; padding-bottom:0.687em;  
+ul, ol { margin-top:0.688em; padding-bottom:0.687em;
 	 list-style-position:outside}
 ul + p, ol + p { margin-top: 0em }
 ul { list-style-type: square }
@@ -74,7 +74,7 @@ ul > li { margin-left: 1.375em; }
 ol > li { margin-left: 1.7em; }
 /* Links */
 
-a, a:link, a:visited, a:active, a:hover { color : #00B; text-decoration: none } 
+a, a:link, a:visited, a:active, a:hover { color : #00B; text-decoration: none }
 a:hover { text-decoration : underline }
 *:target {background-color: #FFFF99;} /* anchor highlight */
 
@@ -88,7 +88,7 @@ a:hover { text-decoration : underline }
 
 /* Functors */
 
-.paramstable { border-style : hidden ; padding-bottom:1.375em} 
+.paramstable { border-style : hidden ; padding-bottom:1.375em}
 .paramstable code { margin-left: 1ex; margin-right: 1ex }
 .sig_block {margin-left: 1em}
 
@@ -96,14 +96,3 @@ a:hover { text-decoration : underline }
 
 img { margin-top: 1.375em; display:block }
 li img { margin-top: 0em; }
-
-
-
-
-
-
-
-
-
-
-

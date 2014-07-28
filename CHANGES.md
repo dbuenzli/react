@@ -4,16 +4,16 @@ v1.1.0 2014-04-27 La Forclaz (VS)
 - Fix `S.switch` rank's initialisation.
 - Add `E.l{1,2,3,4,5,6}`, lifting combinators on events.
 - Add `E.Option.{some,value}`.
-- Add `S.{Float,Int}.{zero,one,minus_one}`. 
+- Add `S.{Float,Int}.{zero,one,minus_one}`.
 - Add `S.Bool.{zero,one}`.
 - Add `S.Option.{none,some,value}`.
 - Add `{S,E}.on` equivalent to `{S,E}.when_`.
-- Deprecate `{S,E}.when_` (syntax error prone). 
+- Deprecate `{S,E}.when_` (syntax error prone).
 
 v1.0.1 2014-04-21 La Forclaz (VS)
 ---------------------------------
 
-- Fix `S.bind`. 
+- Fix `S.bind`.
 - Use package builder topkg for distribution.
 
 v1.0.0 2014-04-02 La Forclaz (VS)
@@ -32,7 +32,7 @@ The following changes are incompatible.
   arrays are not to prevent leaks. The function `{E,S}.stop` now have
   an optional `?strong` argument; if unused the previous semantics is
   preserved.
-- Change signature of `S.switch`. Any existing call `S.switch ~eq s es` can 
+- Change signature of `S.switch`. Any existing call `S.switch ~eq s es` can
   be replaced by `S.(switch ~eq (hold ~eq:( == ) s es))`.
 
 
@@ -59,7 +59,7 @@ v0.9.1 2010-04-15 Paris
 -----------------------
 
 - Added `E.retain` and `S.retain`.
-- A few `List.map` where replaced by `List.rev_map`. 
+- A few `List.map` where replaced by `List.rev_map`.
 - Fixes to `breakout.ml` to make it work on vte based terminals.
 
 
