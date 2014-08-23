@@ -5,7 +5,7 @@
   ---------------------------------------------------------------------------*)
 
 let ( >>= ) v f = match v with `Ok v -> f v | `Error _ as e -> e  
-let ( &>>= ) v f = match v with 
+let ( >>& ) v f = match v with 
 | `Ok v -> f v | `Error e -> Printf.eprintf "%s: %s\n%!" Sys.argv.(0) e; exit 1
 
 type 'a result = [ `Ok of 'a | `Error of string ] 
@@ -53,7 +53,7 @@ end = struct
     let start = ref 0 in
     let last = ref 0 in 
     let len = String.length s in
-    while (!last < len - 2) do
+    while (!last < len - 4) do
       if not (s.[!last] = '%' && s.[!last + 1] = '%') then incr last else 
       begin 
         let start_subst = !last in
@@ -198,7 +198,7 @@ module Git : sig
 end = struct
   let describe ?(chop_v = false) branch =
     if not (Dir.exists ".git") then "not-a-git-checkout" else
-    Cmd.read (Printf.sprintf "git describe %s" branch) &>>= fun d ->
+    Cmd.read (Printf.sprintf "git describe %s" branch) >>& fun d ->
     let len = String.length d in
     if chop_v && len > 0 && d.[0] = 'v' then String.sub d 1 (len - 2) else 
     String.sub d 0 (len - 1) (* remove \n *)

@@ -7,7 +7,8 @@
 
 let () = 
   if Dir.exists ".git" then begin
-    Vars.subst ~skip:Config.subst_skip ~vars:Config.vars ~dir:"." &>>= fun () ->
-    Cmd.exec_hook Config.git_hook &>>= fun () -> ()
+    Vars.subst ~skip:Config.subst_skip ~vars:Config.vars ~dir:"." 
+    >>& fun () -> Cmd.exec_hook Config.git_hook 
+    >>& fun () -> ()
   end
 
