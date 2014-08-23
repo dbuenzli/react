@@ -1,3 +1,12 @@
+
+v1.2.0 2014-08-24 Cambridge (UK)
+--------------------------------
+
+- Fix bug in dynamic creation of S.{diff,changes} (#8).
+- Fix bug in dynamic creation of S.switch (#7).
+- Add support for toplevel: automatically `open React` on `#require "react"`.
+- Add `S.Bool.{flip,edge,fall,rise}`.
+
 v1.1.0 2014-04-27 La Forclaz (VS)
 ---------------------------------
 
