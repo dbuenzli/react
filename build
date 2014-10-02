@@ -16,6 +16,10 @@ action ()
                  jsoo-build $* `opam config var js_of_ocaml:lib`/weak.js \
                             test/js_test.ml 
                  ;;
+        js_hisig_test) shift; 
+                 jsoo-build $* `opam config var js_of_ocaml:lib`/weak.js \
+                            test/js_hisig_test.ml 
+                 ;;
         doc)     shift; pkg-doc $* doc/api.docdir ;;
         clean)   $OCAMLBUILD -clean ;;
         *)       $OCAMLBUILD $* ;;
