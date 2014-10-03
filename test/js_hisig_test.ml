@@ -40,7 +40,7 @@ let ss =
     (S.const 0)
     (E.map (fun v -> S.hold v (high_e tick)) tick)
 
-let gc_ss = S.diff (fun old _ -> S.stop ~strong:true old) ss
+let gc_ss = S.diff (fun _ old -> S.stop ~strong:true old) ss
 
 let s = S.map (fun v -> set_counter_ui v) (S.switch ss)
 
