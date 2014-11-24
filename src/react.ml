@@ -19,7 +19,7 @@ module Wa = struct
      For now the arrays only grow. We could try to compact and
      downsize the array in scan_add if a threshold of empty slots is
      exceeded. *)
-jddu
+
   let create size = { arr = Weak.create size; len = 0 }
   let length a = a.len
   let is_empty a =
