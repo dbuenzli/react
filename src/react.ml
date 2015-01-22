@@ -281,12 +281,20 @@ end
 
 let delayed_rank = max_int
 
+(*try to preallocate. this should have the same semantics.*)
+let global_weak_heap_stack  = ref []
+
 module Step = struct                                       (* Update steps. *)
   type t = step
   let nil = { over = true; heap = Wa.create 0; eops = []; cops = []}
 
   let create () =
-    let h = Wa.create 11 in
+    (*let h = Wa.create 11 in*)
+    let gh = global_weak_heap_stack in
+    let h = match !gh with
+    | top::r -> (gh := r; Wa.clear top; top)
+    | [] -> Wa.create 11
+    in
     { over = false; heap = h; eops = []; cops = []}
 
   let add c n = if n.stamp == c then () else (n.stamp <- c; H.add c.heap n)
@@ -299,11 +307,15 @@ module Step = struct                                       (* Update steps. *)
   let rec execute c =
     let eops c = List.iter (fun op -> op ()) c.eops; c.eops <- [] in
     let cops c = List.iter (fun op -> op ()) c.cops; c.cops <- [] in
-    let finish c = c.over <- true; Wa.clear c.heap in
+    let finish c =
+      global_weak_heap_stack := c.heap::!global_weak_heap_stack;
+      c.over <- true in
     let rec update c = match H.take c.heap with
     | Some n when n.rank <> delayed_rank -> n.update c; update c
     | Some n ->
         let c' = create () in
+        (*debug...*)
+        (*let () = print_endline "created delayed nested step" in*)
         eops c; List.iter (fun n -> n.update c') (n :: H.els c.heap); cops c;
         finish c;
         execute c'
