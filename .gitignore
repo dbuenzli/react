@@ -6,3 +6,6 @@ tmp
 *.native
 *.byte
 *.install
+CLOCK.org
+*.o
+*.swp
