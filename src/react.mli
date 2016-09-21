@@ -204,7 +204,7 @@ module E : sig
       the leftmost is taken and the others are lost.
       {ul
       {- \[[select el]\]{_ t} [=] \[[List.find (fun e -> ]\[[e]\]{_t}
-      [<> None) el]\]{_t}}.
+      [<> None) el]\]{_t}.}
       {- \[[select el]\]{_ t} [= None] otherwise.}}  *)
 
   val merge : ('a -> 'b -> 'a) -> 'a -> 'b event list -> 'a event
