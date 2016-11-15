@@ -27,13 +27,13 @@ let high_e e =
 
 let counter_ui =
   let none () = assert false in
-  let el = Dom_html.window ## document ## getElementById (Js.string "count") in
+  let el = Dom_html.window ##. document ## (getElementById (Js.string "count")) in
   Js.Opt.get el none
 
 let count = ref 0
 let incr_counter () =
   incr count;
-  counter_ui ## innerHTML <- Js.string (string_of_int !count)
+  counter_ui ##. innerHTML := Js.string (string_of_int !count)
 
 let tick, send_tick = E.create ()
 
@@ -41,9 +41,9 @@ let rec loop () =
   let ev = E.map (fun () -> incr_counter ()) (high_e tick) in
   send_tick ();
   E.stop ~strong ev;
-  ignore (Dom_html.window ## setTimeout (Js.wrap_callback loop, 1.))
+  ignore (Dom_html.window ## (setTimeout (Js.wrap_callback loop) (1.)))
 
 
 let main _ = loop (); Js._false
 
-let () = Dom_html.window ## onload <- Dom_html.handler main
+let () = Dom_html.window ##. onload := Dom_html.handler main
