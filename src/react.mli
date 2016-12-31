@@ -675,13 +675,13 @@ module S : sig
       Basic types are already specialized in the module {!Special}, open
       this module to use them.  *)
 
-  (** Input signature of {!S.Make} *)
+  (** Input signature of {!Make} *)
   module type EqType = sig
     type 'a t
     val equal : 'a t -> 'a t -> bool
   end
 
-  (** Output signature of {!S.Make} *)
+  (** Output signature of {!Make} *)
   module type S = sig
     type 'a v
     val create : 'a v -> 'a v signal * (?step:step -> 'a v -> unit)
