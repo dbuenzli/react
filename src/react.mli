@@ -779,7 +779,7 @@ end
     [v] and [None] otherwise. We write \[[e]\]{_t} the evaluation of
     this {e semantic} function at time t.
 
-    As a shortcut notation we also define []{_<t} [: 'a event -> 'a option]
+    As a shortcut notation we also define \[\]{_<t} [: 'a event -> 'a option]
     (resp. \[\]{_<=t}) to denote the last occurrence, if any, of an
     event before (resp. before or at) [t]. More precisely :
     {ul
