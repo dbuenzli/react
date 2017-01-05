@@ -31,7 +31,7 @@ module Wa = struct
       true
     with Exit -> false
 
-  let clear a = a.arr <- Weak.create 0; a.len <- 0
+  let clear a = a.len <- 0
   let get a i = Weak.get a.arr i
   let set a i = Weak.set a.arr i
   let swap a i i' =
@@ -300,7 +300,7 @@ module Step = struct                                       (* Update steps. *)
   let rec execute c =
     let eops c = List.iter (fun op -> op ()) c.eops; c.eops <- [] in
     let cops c = List.iter (fun op -> op ()) c.cops; c.cops <- [] in
-    let finish c = c.over <- true; c.heap <- Wa.create 0 in
+    let finish c = c.over <- true; Wa.clear c.heap in
     let rec update c = match H.take c.heap with
     | Some n when n.rank <> delayed_rank -> n.update c; update c
     | Some n ->
