@@ -8,7 +8,7 @@ events and signals. React doesn't define any primitive event or
 signal, it lets the client chooses the concrete timeline.
 
 React is made of a single, independent, module and distributed under
-the BSD3 license.
+the ISC license.
 
 Home page: http://erratique.ch/software/react  
 Contact: Daniel Bünzli `<daniel.buenzl i@erratique.ch>`

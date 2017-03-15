@@ -6,10 +6,10 @@ doc: "http://erratique.ch/software/react/doc/React"
 dev-repo: "http://erratique.ch/repos/react.git"
 bug-reports: "https://github.com/dbuenzli/react/issues"
 tags: [ "reactive" "declarative" "signal" "event" "frp" "org:erratique" ]
-license: "BSD3"
+license: "ISC"
 depends: ["ocamlfind"]
 ocaml-version: [>= "4.00.0"]
-build: 
+build:
 [
   [ "ocaml" "pkg/git.ml" ]
   [ "ocaml" "pkg/build.ml" "native=%{ocaml-native}%"
