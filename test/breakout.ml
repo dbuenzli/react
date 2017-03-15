@@ -137,9 +137,9 @@ end = struct
   let time, send_time = E.create ()
   let key, send_key = E.create ()
   let gather () =                               (* updates primitive events. *)
-    let c = " " in
+    let c = Bytes.create 1 in
     let i = Unix.stdin in
-    let input_char i = ignore (Unix.read i c 0 1); c.[0] in
+    let input_char i = ignore (Unix.read i c 0 1); Bytes.get c 0 in
     let dt = 0.1 in
     while true do
       if Unix.select [i] [] [] dt = ([i], [], []) then send_key (input_char i);

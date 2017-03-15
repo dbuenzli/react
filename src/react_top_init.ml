@@ -4,7 +4,10 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-let () = ignore (Toploop.use_file Format.err_formatter "react_top_init.ml")
+open React
+;;
+
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2014 Daniel C. Bünzli
