@@ -989,7 +989,7 @@ module S = struct
       match m.sv with
       | Some _ -> Node.stop ?strong m.snode
       | None ->
-          (* The signal was dynamically created didn't update yet. Add the
+          (* The signal was dynamically created and didn't update yet. Add the
              stop as an end of step operation. *)
           match Step.find_unfinished (m.snode.producers ()) with
           | c when c == Step.nil -> assert false
