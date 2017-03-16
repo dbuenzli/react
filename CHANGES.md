@@ -1,4 +1,5 @@
-
+v1.2.1 2017-03-16 La Forclaz (VS)
+---------------------------------
 
 - Allow signals to be created and `S.stop`ped instantaneously (#18)
   Previously this could lead to failed assertions in updates (e.g.
@@ -9,7 +10,10 @@
   for the report.
 - Fix bug in `S.Option.value` with `` `Always`` on `S.const None` (#19).
   Thanks to Arthur Wendling for the report.
-  
+- Safe-string support.
+- Build depend on topkg.
+- Relicense from BSD3 to ISC
+
 v1.2.0 2014-08-24 Cambridge (UK)
 --------------------------------
 
