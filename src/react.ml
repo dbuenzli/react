@@ -983,8 +983,19 @@ module S = struct
   | Const v | Smut { sv = Some v }  -> v
   | Smut { sv = None } -> failwith err_sig_undef
 
-  let stop ?strong =
-    function Const _ -> () | Smut m -> Node.stop ?strong m.snode
+  let stop ?strong = function
+  | Const _ -> ()
+  | Smut m ->
+      match m.sv with
+      | Some _ -> Node.stop ?strong m.snode
+      | None ->
+          (* The signal was dynamically created didn't update yet. Add the
+             stop as an end of step operation. *)
+          match Step.find_unfinished (m.snode.producers ()) with
+          | c when c == Step.nil -> assert false
+          | c ->
+              let stop () = Node.stop ?strong m.snode in
+              Step.add_eop c stop
 
   let equal ?(eq = ( = )) s s' = match s, s' with
   | Const v, Const v' -> eq v v'

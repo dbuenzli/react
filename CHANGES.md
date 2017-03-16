@@ -1,5 +1,9 @@
 
 
+- Allow signals to be created and `S.stop`ped instantaneously (#18)
+  Previously this could lead to failed assertions in updates (e.g.
+  `S.bind` trying to switch to an uninitialized signal). Thanks
+  to Arthur Wendling for the report.
 - Fix implementation of `S.Bool.flip`, its initial value on creation
   could be wrong in dynamic creation (#17). Thanks to Arthur Wendling
   for the report.
