@@ -1,4 +1,3 @@
-
 # Exceptions
 
 * Make steps resistant to exceptions ? There's more than one solution here
@@ -9,8 +8,6 @@
 # New event combinators
 
 * E.merge but only on simultanous occs ?
-* Review Bool.flip init.
-* S.Bool.edge,rise,fall plural ?
 * E.Bool.flip
 
 # Signal init.
@@ -29,7 +26,6 @@ Current combinators are not good for sampling multiple signals,
 which is generally useful in conjunction with accum. TODO
 maybe not in fact see list selector. Just compute the as a signal.
 But maybe not always natural ?
-
 
 # Recursive defs
 
