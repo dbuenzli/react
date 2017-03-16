@@ -1234,7 +1234,7 @@ let test_bool () =
   let a_flip_never = vals (S.Bool.flip false E.never) [false] in
   let a_flip = vals (S.Bool.flip true (S.changes s)) [true; false; true] in
   let dyn_flip = S.bind s (fun _ -> S.Bool.flip true (S.changes s)) in
-  let a_dyn_flip = vals dyn_flip [true; false] in
+  let a_dyn_flip = vals dyn_flip [true] in
   set_s false; set_s true; set_s true; set_s false;
   List.iter empty [a_zedge; a_sedge; ];
   List.iter empty [a_zrise; a_zfall; a_srise; a_rfall ];

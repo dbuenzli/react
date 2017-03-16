@@ -1,6 +1,8 @@
 
 
-
+- Fix implementation of `S.Bool.flip`, its initial value on creation
+  could be wrong in dynamic creation (#17). Thanks to Arthur Wendling
+  for the report.
 - Fix bug in `S.Option.value` with `` `Always`` on `S.const None` (#19).
   Thanks to Arthur Wendling for the report.
   
