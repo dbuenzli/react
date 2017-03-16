@@ -1,4 +1,4 @@
-version = "%%VERSION%%"
+version = "%%VERSION_NUM%%"
 description = "Declarative events and signals for OCaml"
 requires = ""
 archive(byte) = "react.cma"
@@ -7,7 +7,7 @@ plugin(byte) = "react.cma"
 plugin(native) = "react.cmxs"
 
 package "top" (
- version = "%%VERSION%%"
+ version = "%%VERSION_NUM%%"
  description = "React toplevel support"
  requires = "react"
  archive(byte) = "react_top.cma"
