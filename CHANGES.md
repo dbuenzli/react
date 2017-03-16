@@ -1,4 +1,9 @@
 
+
+
+- Fix bug in `S.Option.value` with `` `Always`` on `S.const None` (#19).
+  Thanks to Arthur Wendling for the report.
+  
 v1.2.0 2014-08-24 Cambridge (UK)
 --------------------------------
 

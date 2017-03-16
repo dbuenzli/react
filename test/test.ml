@@ -1213,7 +1213,7 @@ let test_option () =
   let a_s23 = vals s23 [3] in
   let a_s30 = vals s30 [512;3;1024;2048] in
   let a_s31 = vals s31 [1;512;1024;2048] in
-  let a_s32 = vals s32 [512] in
+  let a_s32 = vals s32 [512;1024;2048] in
   let a_s33 = vals s33 [3] in
   set_b0 (Some 3); set_b1 None; set_d 1024; set_b0 None; set_d 2048;
   empty a_dsome;

@@ -1526,22 +1526,25 @@ module S = struct
     let value ?(eq = ( = )) ~default s = match s with
     | Const (Some v) -> Const v
     | Const None ->
-        let d = match default with `Init d -> d | `Always d -> d in
-        begin match d with
-        | Const d -> Const d
-        | Smut md ->
-            match Step.find_unfinished [md.snode] with
-            | c when c == Step.nil -> Const (sval md)
-            | c ->
-                let m' = smut (rsucc md.snode) eq in
-                let rec p () = [ md.snode ]
-                and u c =
-                  Node.rem_dep md.snode m'.snode;
-                  supdate (sval md) m' c;
-                  Node.stop m'.snode
-                in
-                Node.add_dep md.snode m'.snode;
-                signal m' p u
+        begin match default with
+        | `Always d -> d
+        | `Init d ->
+            begin match d with
+            | Const d -> Const d
+            | Smut md ->
+                match Step.find_unfinished [md.snode] with
+                | c when c == Step.nil -> Const (sval md)
+                | c ->
+                    let m' = smut (rsucc md.snode) eq in
+                    let rec p () = [ md.snode ]
+                    and u c =
+                      Node.rem_dep md.snode m'.snode;
+                      supdate (sval md) m' c;
+                      Node.stop m'.snode
+                    in
+                    Node.add_dep md.snode m'.snode;
+                    signal m' p u
+            end
         end
     | Smut m ->
         match default with
