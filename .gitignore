@@ -5,3 +5,6 @@ tmp
 *.native
 *.byte
 *.install
+.merlin
+lib/
+node_modules/
