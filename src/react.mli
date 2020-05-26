@@ -841,7 +841,7 @@ let () = List.iter send_x [1; 2; 3]]}
     integer signal [x] initially set to [1] and updates it three time with
     values [2], [2], [3]. The signal's values are printed on stdout by the
     effectful signal [pr_x]. Note that only updates that change
-    the signal's value are printed, hence the program prints [123], not [1223].
+    the signal's value are printed, hence the program prints [23], not [223].
     See the discussion on
     {{!sideeffects}side effects} for more details.
 
