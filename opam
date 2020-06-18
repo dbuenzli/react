@@ -1,7 +1,7 @@
 opam-version: "2.0"
 maintainer: "Daniel Bünzli <daniel.buenzl i@erratique.ch>"
 homepage: "https://erratique.ch/software/react"
-authors: ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
+authors: ["The react programmers"]
 doc: "https://erratique.ch/software/react/doc/React"
 dev-repo: "git+https://erratique.ch/repos/react.git"
 bug-reports: "https://github.com/dbuenzli/react/issues"
