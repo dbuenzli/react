@@ -13,11 +13,9 @@
 
     Consult the {{!sem}semantics}, the {{!basics}basics} and
     {{!ex}examples}. Open the module to use it, this defines only two
-    types and modules in your scope.
+    types and modules in your scope. *)
 
-    {e Release %%VERSION%% - %%MAINTAINER%% } *)
-
-(**    {1 Interface} *)
+(** {1:interface Interface} *)
 
 type 'a event
 (** The type for events of type ['a]. *)
@@ -829,7 +827,8 @@ end
     occurrence for the event at the time it is called. The following
     code creates a primitive integer event [x] and generates three
     occurrences with value [1], [2], [3]. Those occurrences are printed
-    on stdout by the effectful event [pr_x].  {[open React;;
+    on stdout by the effectful event [pr_x].
+{[open React;;
 
 let x, send_x = E.create ()
 let pr_x = E.map print_int x

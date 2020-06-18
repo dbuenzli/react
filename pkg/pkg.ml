@@ -16,6 +16,7 @@ let () =
        Pkg.test ~run:false "test/breakout";
        Pkg.test ~run:false "test/clock";
        Pkg.test "test/test";
+       Pkg.doc "doc/index.mld" ~dst:"odoc-pages/index.mld";
     (* jsoo_test ~cond:jsoo "test/js_hisig_test";
        jsoo_test ~cond:jsoo "test/js_test"; *)
      ]
