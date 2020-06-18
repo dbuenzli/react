@@ -898,7 +898,7 @@ module E = struct
       add_dep m5 m'.enode;
       event m' p u
 
-  (* Pervasives support *)
+  (* Stdlib support *)
 
   module Option = struct
     let some e = map (fun v -> Some v) e
@@ -1408,10 +1408,11 @@ module S = struct
   | s0, s1, s2, s3, s4, s5 -> app ~eq (l5 ~eq:( == ) f s0 s1 s2 s3 s4) s5
 
   module Bool = struct
+    let stdlib_not = not
     let one = Const true
     let zero = Const false
     let eq : bool -> bool -> bool = ( = )
-    let not s = l1 ~eq not s
+    let not s = l1 ~eq stdlib_not s
     let ( && ) s s' = l2 ~eq ( && ) s s'
     let ( || ) s s' = l2 ~eq ( || ) s s'
 
@@ -1434,7 +1435,7 @@ module S = struct
         let rec p () = [ m.enode ]
         and u c = match !(m.ev) with
         | None -> ()
-        | Some _ -> supdate (Pervasives.not (sval m')) m' c
+        | Some _ -> supdate (stdlib_not (sval m')) m' c
         in
         E.add_dep m m'.snode;
         signal ~i:b m' p u

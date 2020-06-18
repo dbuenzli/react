@@ -258,7 +258,7 @@ module E : sig
   val l6 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g) -> 'a event -> 'b event ->
     'c event -> 'd event -> 'e event -> 'f event -> 'g event
 
-  (** {1 Pervasives support} *)
+  (** {1:stdlib_support Stdlib support} *)
 
   (** Events with option occurences. *)
   module Option : sig
@@ -520,7 +520,7 @@ module S : sig
     ('a signal -> 'b signal -> 'c signal -> 'd signal -> 'e signal ->
       'f signal -> 'g signal)
 
-  (** The following modules lift some of [Pervasives] functions and
+  (** The following modules lift some of [Stdlib] functions and
       operators. *)
 
   module Bool : sig
@@ -951,7 +951,7 @@ let () = Gc.full_major (); List.iter set_x [2; 2; 3]]}
 let fl x y = S.app (S.app ~eq:(==) (S.const f) x) y (* inefficient *)
 let fl' x y = S.l2 f x y                            (* efficient *)
 ]}
-    Besides, some of [Pervasives]'s functions and operators are
+    Besides, some of [Stdlib]'s functions and operators are
     already lifted and availables in submodules of {!S}. They can be
     be opened in specific scopes. For example if you are dealing with
     float signals you can open {!S.Float}.
@@ -960,7 +960,7 @@ open React.S.Float
 
 let f t = sqrt t *. sin t (* f is defined on float signals *)
 ...
-open Pervasives (* back to pervasives floats *)
+open Stdlib (* back to Stdlib floats *)
 ]}
    If you are using OCaml 3.12 or later you can also use the [let open]
    construct

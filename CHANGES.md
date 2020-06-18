@@ -1,3 +1,8 @@
+
+
+- Require OCaml >= 4.05. 
+- Handle deprecation of `Pervasives`.
+
 v1.2.1 2017-03-16 La Forclaz (VS)
 ---------------------------------
 
