@@ -3,7 +3,7 @@
    Distributed under the ISC license, see terms at the end of the file.
   ---------------------------------------------------------------------------*)
 
-let () = ignore (Toploop.use_file Format.err_formatter "react_top_init.ml")
+let () = ignore (Toploop.load_file Format.err_formatter "react_top_init.ml")
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2014 The react programmers
