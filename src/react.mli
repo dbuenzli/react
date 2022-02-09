@@ -435,7 +435,7 @@ module S : sig
   (** {1:acc Accumulating} *)
 
   val accum : ?eq:('a -> 'a -> bool) -> ('a -> 'a) event -> 'a -> 'a signal
-  (** [accum e i] is [S.hold i (]{!E.accum}[ e i)]. *)
+  (** [accum e i] is [S.hold i (]{!E.val-accum}[ e i)]. *)
 
   val fold : ?eq:('a -> 'a -> bool) -> ('a -> 'b -> 'a) -> 'a -> 'b event ->
     'a signal
