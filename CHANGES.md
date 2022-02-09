@@ -1,4 +1,5 @@
-
+v1.2.2 2022-01-09 La Forclaz (VS)
+---------------------------------
 
 - Require OCaml 4.08. 
 - Handle deprecation of `Pervasives` (and thus support OCaml 5.00)
