@@ -5,8 +5,4 @@ provides support to program with time varying values : declarative
 events and signals. React doesn't define any primitive event or
 signal, it lets the client chooses the concrete timeline.
 
-{1:api API}
-
-{!modules:
-React
-}
+{!modules: React }

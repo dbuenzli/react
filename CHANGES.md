@@ -1,7 +1,7 @@
 
 
-- Require OCaml >= 4.05. 
-- Handle deprecation of `Pervasives`.
+- Require OCaml 4.08. 
+- Handle deprecation of `Pervasives` (and thus support OCaml 5.00)
 
 v1.2.1 2017-03-16 La Forclaz (VS)
 ---------------------------------
