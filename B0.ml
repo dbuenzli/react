@@ -1,5 +1,4 @@
 open B0_kit.V000
-open B00_std
 
 (* OCaml library names *)
 
@@ -29,7 +28,7 @@ let test_exe ?(requires = []) src ~doc =
   let srcs = Fpath.[`File src] in
   let meta = B0_meta.(empty |> tag test) in
   let requires = react :: requires in
-  B0_ocaml.exe (Fpath.basename ~no_ext:true src) ~srcs ~doc ~meta ~requires
+  B0_ocaml.exe (Fpath.basename ~strip_ext:true src) ~srcs ~doc ~meta ~requires
 
 let test = test_exe "test/test.ml" ~doc:"Test suite"
 let clock =
@@ -42,26 +41,26 @@ let breakout =
 
 let default =
   let meta =
-    let open B0_meta in
-    empty
-    |> tag B0_opam.tag
-    |> add authors ["The react programmers"]
-    |> add maintainers ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
-    |> add homepage "https://erratique.ch/software/react"
-    |> add online_doc "https://erratique.ch/software/react/doc/"
-    |> add licenses ["ISC"]
-    |> add repo "git+https://erratique.ch/repos/react.git"
-    |> add issues "https://github.com/dbuenzli/react/issues"
-    |> add description_tags
+    B0_meta.empty
+    |> B0_meta.(add authors) ["The react programmers"]
+    |> B0_meta.(add maintainers)
+       ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
+    |> B0_meta.(add homepage) "https://erratique.ch/software/react"
+    |> B0_meta.(add online_doc) "https://erratique.ch/software/react/doc/"
+    |> B0_meta.(add licenses) ["ISC"]
+    |> B0_meta.(add repo) "git+https://erratique.ch/repos/react.git"
+    |> B0_meta.(add issues) "https://github.com/dbuenzli/react/issues"
+    |> B0_meta.(add description_tags)
       ["reactive"; "declarative"; "signal"; "event"; "frp"; "org:erratique"]
-    |> add B0_opam.Meta.depends
+    |> B0_meta.tag B0_opam.tag
+    |> B0_meta.add B0_opam.depends
       [ "ocaml", {|>= "4.08.0"|};
         "ocamlfind", {|build|};
         "ocamlbuild", {|build|};
         "topkg", {|build & >= "1.0.3"|};
       ]
-    |> add B0_opam.Meta.build
+    |> B0_meta.add B0_opam.build
       {|[["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]]|}
   in
-  B0_pack.v "default" ~doc:"react package" ~meta ~locked:true @@
+  B0_pack.make "default" ~doc:"react package" ~meta ~locked:true @@
   B0_unit.list ()
