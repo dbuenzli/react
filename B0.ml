@@ -11,12 +11,12 @@ let compiler_libs_toplevel = B0_ocaml.libname "compiler-libs.toplevel"
 (* Libraries *)
 
 let react_lib =
-  let srcs = Fpath.[ `File (v "src/react.mli"); `File (v "src/react.ml") ] in
+  let srcs = Filepath.[ `File (v "src/react.mli"); `File (v "src/react.ml") ] in
   let requires = [] in
   B0_ocaml.lib react ~doc:"The react library" ~srcs ~requires
 
 let react_top_lib =
-  let srcs = Fpath.[ `File (v "src/react_top.ml") ] in
+  let srcs = Filepath.[ `File (v "src/react_top.ml") ] in
   let requires = [compiler_libs_toplevel] in
   let doc = "The react toplevel support library" in
   B0_ocaml.lib react_top ~doc ~srcs ~requires
@@ -24,11 +24,12 @@ let react_top_lib =
 (* Tests *)
 
 let test_exe ?(requires = []) src ~doc =
-  let src = Fpath.v src in
-  let srcs = Fpath.[`File src] in
+  let src = Filepath.v src in
+  let srcs = Filepath.[`File src] in
   let meta = B0_meta.(empty |> tag test) in
   let requires = react :: requires in
-  B0_ocaml.exe (Fpath.basename ~drop_exts:true src) ~srcs ~doc ~meta ~requires
+  B0_ocaml.exe
+    (Filepath.basename ~drop_exts:true src) ~srcs ~doc ~meta ~requires
 
 let test = test_exe "test/test.ml" ~doc:"Test suite"
 let clock =
